@@ -1,5 +1,5 @@
 {
-  "name": "Engagement Analytics Server",
+  "name": "Engagement-Analytics-Server",
   "description": "",
   "author": "Rebecca Townsend",
   "license": "ISC",
@@ -11,9 +11,11 @@
     "bookshelf": "^0.12.0",
     "express": "^4.16.2",
     "knex": "^0.13.0",
-    "pg": "^7.4.0"
+    "pg": "^7.4.0",
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
-    "eslint": "^4.13.1"
+    "eslint": "^4.13.1",
+    "faker": "^4.1.0"
   }
 }
