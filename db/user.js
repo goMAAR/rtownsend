@@ -13,7 +13,10 @@ const User = Bookshelf.Model.extend({
     return this.hasOne('Usermetric');
   },
   favorites: function() {
-    return this.hasMany('Favorite');
+    return this.hasMany('Favorite', follower_id);
+  },
+  favorites: function() {
+    return this.hasMany('Favorite', followed_id);
   },
   networks: function() {
     return this.hasMany('Network');

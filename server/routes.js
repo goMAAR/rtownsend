@@ -11,7 +11,7 @@ routes.get('/populateUsers', (req, res) => {
     new User({
       id: user.id,
       bot_account: user.bot_account
-    }).save().then(model => {
+    }).save(null, {method: 'insert'}).then(model => {
       console.log(model);
     })
     .catch(err => {

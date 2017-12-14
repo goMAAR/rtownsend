@@ -1,6 +1,6 @@
 exports.up = function(knex, Promise) {
   return Promise.all([
-    //tweets
+
     knex.schema.createTableIfNotExists('users', function(table) {
       table.integer('id').primary();
       table.boolean('bot_account');
