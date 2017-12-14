@@ -4,7 +4,8 @@
   "author": "Rebecca Townsend",
   "license": "ISC",
   "scripts": {
-    "server-dev": "nodemon server/index.js"
+    "server-dev": "nodemon server/index.js",
+    "populate": "populateDB.js"
   },
   "dependencies": {
     "body-parser": "^1.18.2",
@@ -15,6 +16,7 @@
     "underscore": "^1.8.3"
   },
   "devDependencies": {
+    "axios": "^0.17.1",
     "eslint": "^4.13.1",
     "faker": "^4.1.0"
   }
