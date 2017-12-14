@@ -1,4 +1,3 @@
-const faker = require('faker');
 const underscore = require('underscore');
 
 /*===============GENERATE USER DATA==================*/
@@ -12,13 +11,11 @@ for (let i = 1; i < 10; i++) {
   if (i < 5) {
     user = {
       id: i,
-      timestamp: faker.date.recent(),
       bot_account: true
     }
   } else {
     user = {
       id: i,
-      timestamp: faker.date.recent(),
       bot_account: false
     }
   }
