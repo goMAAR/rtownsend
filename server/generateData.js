@@ -2,13 +2,18 @@ const underscore = require('underscore');
 
 /*===============GENERATE USER DATA==================*/
 /*=====================GOAL: 50K=====================*/
-/*=================15% bot, 85% not==================*/
+/*=================appx. 15% bot=====================*/
 
-// Testing distribution with 100K
 const users = [];
-for (let i = 1; i < 10; i++) {
+
+//not quite getting to 50k so running in two sequences:
+  //1 - 1-16033
+  //1a - 16034 - 24999
+  //2 - 25000 - 50000
+
+for (let i = 25000; i < 50001; i++) {
   let user = {};
-  if (i < 5) {
+  if (Math.floor(Math.random() * 100) <= 15) {
     user = {
       id: i,
       bot_account: true
