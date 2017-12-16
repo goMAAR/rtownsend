@@ -6,7 +6,7 @@ const underscore = require('underscore');
 
 const users = [];
 
-//not quite getting to 50k so running in two sequences:
+//not quite getting to 50k so running in mult sequences:
   //1 - 1-16033
   //1a - 16034 - 24999
   //2 - 25000 - 50000
@@ -30,6 +30,4 @@ for (let i = 25000; i < 50001; i++) {
 module.exports.users = users;
 
 
-/*===============GENERATE TWEETS DATA================*/
-/*=====================GOAL: 10M=====================*/
 

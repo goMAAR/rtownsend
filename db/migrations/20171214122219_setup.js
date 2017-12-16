@@ -70,7 +70,7 @@ exports.down = function(knex, Promise) {
     knex.schema.dropTable('networkmetrics'),
     knex.schema.dropTable('networks'),
     knex.schema.dropTable('hourlyengagements'),
-    knex.schema.dropTable('tweets'),
+    // knex.schema.dropTable('tweets'),
     knex.schema.dropTable('users'),
   ])
 };

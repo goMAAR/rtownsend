@@ -1,7 +1,8 @@
 const routes = require('express').Router();
-const users = require('./generateData.js').users;
 const _ = require('underscore');
+const Promise = require('bluebird');
 const User = require('../db/user.js');
+const users = require('./seedUser.js').users;
 
 /*==========UNCOMMENT TO SEED USERS==========*/
 // routes.get('/seedUsers', (req, res) => {
@@ -19,4 +20,9 @@ const User = require('../db/user.js');
 //   res.sendStatus(200);
 // });
 
+routes.get('/calculateTEI', (req, res) => {
+  
+})
+
 module.exports = routes;
+
