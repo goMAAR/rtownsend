@@ -4,17 +4,22 @@
   "author": "Rebecca Townsend",
   "license": "ISC",
   "scripts": {
-    "server-dev": "nodemon server/index.js"
+    "server-dev": "nodemon server/index.js",
+    "populate": "populateDB.js"
   },
   "dependencies": {
+    "bluebird": "^3.5.1",
     "body-parser": "^1.18.2",
     "bookshelf": "^0.12.0",
     "express": "^4.16.2",
+    "jsonfile": "^4.0.0",
     "knex": "^0.13.0",
+    "moment": "^2.19.4",
     "pg": "^7.4.0",
     "underscore": "^1.8.3"
   },
   "devDependencies": {
+    "axios": "^0.17.1",
     "eslint": "^4.13.1",
     "faker": "^4.1.0"
   }

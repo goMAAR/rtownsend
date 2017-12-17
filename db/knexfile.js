@@ -5,7 +5,7 @@ module.exports = {
     host: 'localhost',
     user: 'reb',
     password: '',
-    database: 'analysis'
+    database: 'statistics'
   }
 };
 
