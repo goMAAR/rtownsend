@@ -1,33 +1,35 @@
-const underscore = require('underscore');
+const fs = require('fs');
+const randomNumber = require('./helpers.js').randomNumber;
+const outfile = '../server/outUser.csv';
 
 /*===============GENERATE USER DATA==================*/
 /*=====================GOAL: 50K=====================*/
 /*=================appx. 15% bot=====================*/
 
-const users = [];
+// Creates records with the following fields:
+// id, bot_account
 
-//not quite getting to 50k so running in mult sequences:
-  //1 - 1-16033
-  //1a - 16034 - 24999
-  //2 - 25000 - 50000
+let user = '';
 
-for (let i = 25000; i < 50001; i++) {
-  let user = {};
-  if (Math.floor(Math.random() * 100) <= 15) {
-    user = {
-      id: i,
-      bot_account: true
+const generateUsers = () => {
+  // Create 50,000 users
+  for (let i = 1; i < 50001; i++) {
+    // distributes accounts such that 15% are bots
+    if (Math.floor(Math.random() * 100) <= 15) {
+      user = `${i}, ${true}\r\n`;
+      fs.appendFileSync(outfile, user, err => {
+        console.log(err);
+      });
+    } else {
+      user = `${i}, ${false}\r\n`;
+      fs.appendFileSync(outfile, user, err => {
+        console.log(err);
+      });
     }
-  } else {
-    user = {
-      id: i,
-      bot_account: false
-    }
-  }
-  users.push(user);
+  }  
 }
 
-module.exports.users = users;
 
-
+/*===========UNCOMMENT TO GENERATE USERS===========*/
+// generateUsers();
 

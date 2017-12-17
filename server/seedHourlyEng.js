@@ -10,11 +10,16 @@ const outfile = '../server/outhourlyeng.csv';
  * there should be 90 dates
 *========================================================*/
 
-let hourlyEngagement = ``;
+// Creates records with the following fields:
+// date, hour, avg_BER
+
+let hourlyEngagement = '';
 
 const generateHourlyEngagements = () => {
   let date = moment();
+  // Outer loop represents number of days to generate (90)
   for (let i = 0; i < 90; i++) {
+    // Inner loop represents number of hours to generate per day (24)
     for (let j = 1; j < 25; j++) {
       hourlyEngagement = `${date.toISOString()}, ${j}, ${randomNumber(20)}\r\n`;
       fs.appendFileSync(outfile, hourlyEngagement, err => {

@@ -9,10 +9,14 @@ const outfile = '../server/outdailyeng.csv';
 
 *========================================================*/
 
-let dailyEngagement = ``;
+// Creates records with the following fields:
+// date, avg_BER
+
+let dailyEngagement = '';
 
 const generateDailyEngagements = () => {
   let date = moment();
+  // Create 90 days worth of data
   for (let i = 0; i < 90; i++) {
     dailyEngagement = `${date.toISOString()}, ${randomNumber(20)}\r\n`;
     fs.appendFileSync(outfile, dailyEngagement, err => {

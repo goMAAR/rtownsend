@@ -1,4 +1,3 @@
-const underscore = require('underscore');
 const fs = require('fs');
 const randomNumber = require('./helpers.js').randomNumber;
 const outfile = '../server/outTweet.csv';
@@ -6,7 +5,10 @@ const outfile = '../server/outTweet.csv';
 /*===============GENERATE TWEETS DATA================*/
 /*=====================GOAL: 10M=====================*/
 
-// const tweets = [];
+// Creates records with the following fields:
+// id, user_id, text, tweet_extremity_index
+
+/*==================Tweet word bank==================*/
 
 const prefaces = [
 'Ask me why I think',
@@ -34,6 +36,10 @@ const nouns =   ['pumpkin spice lattes',
   'my imaginary friends from elementary school'
 ];
 
+/*=========GENERATION FUNCTIONS AND VARIABLES=========*/
+
+
+let user_id, prefaceIndex, nounIndex, workIndex, extremeFlag;
 
 const makeTweet = (preface, noun, word) => {
   return `${preface} ${noun} are ${word}`;
@@ -41,13 +47,16 @@ const makeTweet = (preface, noun, word) => {
 
 let tweet = '';
 
-const outputTweets = () => {
+const generateTweets = () => {
+  // Creates 10 million tweets
   for (let i = 1; i < 10000001; i++) {
-    let user_id = randomNumber(50000) + 1;
-    let prefaceIndex = randomNumber(4);
-    let nounIndex = randomNumber(8);
-    let wordIndex = randomNumber(4);
-    let extremeFlag = randomNumber(100);
+    user_id = randomNumber(50000) + 1;
+    prefaceIndex = randomNumber(4);
+    nounIndex = randomNumber(8);
+    wordIndex = randomNumber(4);
+    // use extreme flag to distribute tweet sentiment
+    extremeFlag = randomNumber(100);
+    // divides tweets into approximately 76% 'extreme in sentiment' and the remainder 'neutral in sentiment'
     if (extremeFlag < 77) {
       tweet = `${i}, ${user_id}, ${makeTweet(prefaces[prefaceIndex], nouns[nounIndex], extremeWords[wordIndex])}, .75\r\n`;
     } else {
@@ -59,9 +68,9 @@ const outputTweets = () => {
   }
 }
 /*===========UNCOMMENT TO GENERATE TWEETS===========*/
-outputTweets();
+// generateTweets();
 
 
 /*=========EFFICIENCY LOG=========*/
-// Times out at 90167 calls
-// 10
+// Timed out at 90167 calls initially
+// Currently loads to file in 17 minutes; file upload to db in 5 minutes or so
