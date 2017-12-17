@@ -1,6 +1,6 @@
 # Project Name
 
-The project description
+Twitter Clone Analytics Micro-Service
 
 ## Roadmap
 
@@ -20,14 +20,20 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## Usage
 
-> Some usage instructions
+> npm install
+> Run command 'npm run server-dev' in terminal to start up development server
 
 ## Requirements
 
-- Node 6.9.x
-- Redis 3.2.x
-- Postgresql 9.6.x
-- etc
+- Node 8.9.1
+- Express 4.16.2
+- Postgresql 10.1
+- pg 7.4
+- Bookshelf 0.12
+- Knex 0.13
+- Bluebird 3.5.1
+- Moment 2.19.4
+- Faker 4.1
 
 ## Other Information
 
