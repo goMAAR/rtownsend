@@ -1,7 +1,7 @@
 const moment = require('moment');
 const fs = require('fs');
-const randomNumber = require('./helpers.js').randomNumber;
-const outfile = '../server/outdailyeng.csv';
+const randomNumber = require('../server/helpers.js').randomNumber;
+const outfile = '../server/outfile.csv';
 
 /*===============GENERATE USER DAILY ENGAGEMENT DATA==================*/
 /*=======================GOAL: 90 (DAYS)=======================*/
