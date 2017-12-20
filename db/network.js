@@ -4,7 +4,7 @@ require('./user.js');
 require('./networkmetric.js');
 const Network = Bookshelf.Model.extend({
   tableName: 'networks',
-  timestamps: true,
+  hasTimestamps: true,
   users: function() {
     return this.belongsTo('User');
   },

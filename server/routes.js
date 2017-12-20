@@ -19,6 +19,7 @@ const AWS = require('aws-sdk');
 
 const newTweetQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/newTweets';
 const newFavoriteQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/newFavorite';
+const networkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/follow';
 
 AWS.config.loadFromPath(__dirname + '/config.json');
 
@@ -74,8 +75,8 @@ const tweetApp = Consumer.create({
     // insert tweet into database
     new Tweet({id: body.id, user_id: body.user_id, text: body.text, tweet_extremity_index: TEI})
     .save()
-    .then(model => {
-      console.log('successfully saved new tweet: ', model.attributes);
+    .then(tweet => {
+      console.log('successfully saved new tweet: ', tweet.attributes);
     })
     .catch(err => {
       console.log(err);
@@ -96,28 +97,29 @@ tweetApp.start();
 // tweetApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND FAVORITE TO QUEUE===================*/
-const exampleFavorite = {
-  tweet_id: 12345,
-  favoriter_id: 50000,
-  created_at: '2017-12-15 22:02:52.056-08',
-};
+// const exampleFavorite = {
+//   tweet_id: 12345,
+//   favoriter_id: 50000,
+//   created_at: '2017-12-15 22:02:52.056-08',
+//   destroy: true
+// };
 
-const sqs = new AWS.SQS();
-router.get('/send', (req, res) => {
-  let params = {
-    MessageBody: JSON.stringify(exampleFavorite),
-    QueueUrl: newFavoriteQueueUrl,
-    DelaySeconds: 0
-  };
+// const sqs = new AWS.SQS();
+// router.get('/send', (req, res) => {
+//   let params = {
+//     MessageBody: JSON.stringify(exampleFavorite),
+//     QueueUrl: newFavoriteQueueUrl,
+//     DelaySeconds: 0
+//   };
 
-  sqs.sendMessage(params, (err, data) => {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(data);
-    }
-  });
-});
+//   sqs.sendMessage(params, (err, data) => {
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 /*========================FAVORITES QUEUE HANDLER========================*/
 
@@ -125,16 +127,33 @@ const favoriteApp = Consumer.create({
   queueUrl: newFavoriteQueueUrl,
   handleMessage: (message, done) => {
     body = JSON.parse(message.Body);
-    new Favorite ({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id})
-    .save()
-    .then(model => {
-      console.log('successfully saved new favorite: ', model.attributes);
-    })
-    .catch(err => {
-      console.log(err);
-    })
-    // remove from queue
-    done();
+    if (body.destroy) {
+      // delete record
+      // implement better error handling for nonexistent records
+      new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id}).fetch()
+      .then(favorite => {
+        new Favorite({id: favorite.id})
+        .destroy()
+        .then(result => {
+          console.log('successfully destroyed record');
+        })
+        .catch(err => {
+          console.log(err);
+        });
+        done();
+      })
+    } else {
+      // create new record
+      new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id})
+      .save()
+      .then(favorite => {
+        console.log('successfully saved new favorite: ', favorite.attributes);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+      done();
+    }
   }
 });
 
@@ -147,6 +166,77 @@ favoriteApp.on('error', err => {
 favoriteApp.start();
 // uncomment to stop polling queue
 // favoriteApp.stop();
+
+/*===================UNCOMMENT TO MANUALLY SEND NETWORK TO QUEUE===================*/
+const exampleNetwork = {
+  follower_id: 40000,
+  followed_id: 400,
+  created_at: '2017-12-15 22:02:52.056-08',
+  destroy: true
+};
+
+const sqs = new AWS.SQS();
+router.get('/send', (req, res) => {
+  let params = {
+    MessageBody: JSON.stringify(exampleNetwork),
+    QueueUrl: networkQueueUrl,
+    DelaySeconds: 0
+  };
+
+  sqs.sendMessage(params, (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
+
+/*========================NETWORK  QUEUE HANDLER========================*/
+
+const networkApp = Consumer.create({
+  queueUrl: networkQueueUrl,
+  handleMessage: (message, done) => {
+    body = JSON.parse(message.Body);
+    if (body.destroy) {
+      // delete record
+      // implement better error handling for nonexistent records
+      new Network({follower_id: body.follower_id, followed_id: body.followed_id}).fetch()
+      .then(network => {
+        new Network({id: network.id})
+        .destroy()
+        .then(result => {
+          console.log('successfully destroyed record');
+        })
+        .catch(err => {
+          console.log(err);
+        });
+        done();
+      })
+    } else {
+      // create new record
+      new Network({follower_id: body.follower_id, followed_id: body.followed_id})
+      .save()
+      .then(network => {
+        console.log('successfully saved new network: ', network.attributes);
+      })
+      .catch(err => {
+        console.log(err);
+      });
+      done();
+    }
+  }
+});
+
+// handle queue errors
+networkApp.on('error', err => {
+  console.log(err.message);
+});
+
+// start polling queue
+networkApp.start();
+// uncomment to stop polling queue
+// networkApp.stop();
 
 /*===========================EXAMPLES OF MANUAL QUEUE HANDLING===========================*/
 // router.get('/receive', (req, res) => {
