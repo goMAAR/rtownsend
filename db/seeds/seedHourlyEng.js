@@ -1,7 +1,7 @@
 const moment = require('moment');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outhourlyeng.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/outhourlyeng.csv';
 
 /*===============GENERATE USER HOURLY ENGAGEMENT DATA==================*/
 /*=======================GOAL: 2,160 (HOURS)=======================*/

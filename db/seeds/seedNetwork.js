@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outNetwork.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/outNetwork.csv';
 
 /*===============GENERATE FAVORITES DATA==================*/
 /*=====================CONSTRAINTS=====================*/

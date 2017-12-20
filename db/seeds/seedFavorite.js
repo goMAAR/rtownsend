@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/favorite.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/favorite.csv';
 
 /*===============GENERATE NETWORK DATA==================*/
 /*====================GOAL: 275,000===================*/

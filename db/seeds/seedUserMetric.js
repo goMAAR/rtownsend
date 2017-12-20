@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outusermetric.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/outusermetric.csv';
 
 /*===============GENERATE USER METRIC DATA==================*/
 /*=======================GOAL: 50,000=======================*/

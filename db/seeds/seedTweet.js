@@ -1,6 +1,6 @@
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outTweet.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/outTweet.csv';
 
 /*===============GENERATE TWEETS DATA================*/
 /*=====================GOAL: 10M=====================*/
