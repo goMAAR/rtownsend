@@ -24,6 +24,8 @@ const networkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/follow
 AWS.config.loadFromPath(__dirname + '/config.json');
 
 /*===================UNCOMMENT TO MANUALLY SEND TWEET TO QUEUE===================*/
+/*this section and all subsequent manual queuing code will be removed prior to finalization*/
+
 // const exampleTweet = {
 //   id: 60000,
 //   user_id: 3456,
@@ -129,7 +131,6 @@ const favoriteApp = Consumer.create({
     body = JSON.parse(message.Body);
     if (body.destroy) {
       // delete record
-      // implement better error handling for nonexistent records
       new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id}).fetch()
       .then(favorite => {
         new Favorite({id: favorite.id})
@@ -137,6 +138,7 @@ const favoriteApp = Consumer.create({
         .then(result => {
           console.log('successfully destroyed record');
         })
+        /* will research more complete error handling for nonexistent records */
         .catch(err => {
           console.log(err);
         });
@@ -168,29 +170,29 @@ favoriteApp.start();
 // favoriteApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND NETWORK TO QUEUE===================*/
-const exampleNetwork = {
-  follower_id: 40000,
-  followed_id: 400,
-  created_at: '2017-12-15 22:02:52.056-08',
-  destroy: true
-};
+// const exampleNetwork = {
+//   follower_id: 40000,
+//   followed_id: 400,
+//   created_at: '2017-12-15 22:02:52.056-08',
+//   destroy: true
+// };
 
-const sqs = new AWS.SQS();
-router.get('/send', (req, res) => {
-  let params = {
-    MessageBody: JSON.stringify(exampleNetwork),
-    QueueUrl: networkQueueUrl,
-    DelaySeconds: 0
-  };
+// const sqs = new AWS.SQS();
+// router.get('/send', (req, res) => {
+//   let params = {
+//     MessageBody: JSON.stringify(exampleNetwork),
+//     QueueUrl: networkQueueUrl,
+//     DelaySeconds: 0
+//   };
 
-  sqs.sendMessage(params, (err, data) => {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(data);
-    }
-  });
-});
+//   sqs.sendMessage(params, (err, data) => {
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 /*========================NETWORK  QUEUE HANDLER========================*/
 
@@ -200,7 +202,6 @@ const networkApp = Consumer.create({
     body = JSON.parse(message.Body);
     if (body.destroy) {
       // delete record
-      // implement better error handling for nonexistent records
       new Network({follower_id: body.follower_id, followed_id: body.followed_id}).fetch()
       .then(network => {
         new Network({id: network.id})
@@ -208,6 +209,7 @@ const networkApp = Consumer.create({
         .then(result => {
           console.log('successfully destroyed record');
         })
+        /* will research more complete error handling for nonexistent records */
         .catch(err => {
           console.log(err);
         });
