@@ -18,6 +18,7 @@ const Consumer = require('sqs-consumer');
 const AWS = require('aws-sdk');
 
 const newTweetQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/newTweets';
+const newFavoriteQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/newFavorite';
 
 AWS.config.loadFromPath(__dirname + '/config.json');
 
@@ -94,7 +95,60 @@ tweetApp.start();
 // uncomment to stop polling queue
 // tweetApp.stop();
 
+/*===================UNCOMMENT TO MANUALLY SEND FAVORITE TO QUEUE===================*/
+const exampleFavorite = {
+  tweet_id: 12345,
+  favoriter_id: 50000,
+  created_at: '2017-12-15 22:02:52.056-08',
+};
 
+const sqs = new AWS.SQS();
+router.get('/send', (req, res) => {
+  let params = {
+    MessageBody: JSON.stringify(exampleFavorite),
+    QueueUrl: newFavoriteQueueUrl,
+    DelaySeconds: 0
+  };
+
+  sqs.sendMessage(params, (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
+
+/*========================FAVORITES QUEUE HANDLER========================*/
+
+const favoriteApp = Consumer.create({
+  queueUrl: newFavoriteQueueUrl,
+  handleMessage: (message, done) => {
+    body = JSON.parse(message.Body);
+    new Favorite ({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id})
+    .save()
+    .then(model => {
+      console.log('successfully saved new favorite: ', model.attributes);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+    // remove from queue
+    done();
+  }
+});
+
+// handle queue errors
+favoriteApp.on('error', err => {
+  console.log(err.message);
+});
+
+// start polling queue
+favoriteApp.start();
+// uncomment to stop polling queue
+// favoriteApp.stop();
+
+/*===========================EXAMPLES OF MANUAL QUEUE HANDLING===========================*/
 // router.get('/receive', (req, res) => {
 //   let params = {
 //     QueueUrl: queueUrl,
@@ -124,28 +178,6 @@ tweetApp.start();
 //     }
 //   });
 // });
-
-
-/*==============ROUTES HERE==============*/
-
-/*RECIEVE TWEETS FROM TWEET INVENTORY*/
-// Tweets go to cache
-// cache comes to route
-
-/* POST /newTweet
-  // expected input
-  {
-    tweet_id: 1000,
-    user_id: 6453,
-    message: 'a sample tweet',
-    timestamp: asdfasdf  
-  }
-  // output: success/error
-*/
-
-
-
-
 
 module.exports = router;
 
