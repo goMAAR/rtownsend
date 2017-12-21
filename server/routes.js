@@ -28,6 +28,8 @@ AWS.config.loadFromPath(__dirname + '/config.json');
 
 /*===========================CALCULATE NETWORK METRICS===========================*/
 
+/*super incomplete*/
+
 router.get('/networkMetrics', (req, res) => {
   console.log('Executing updateNetworkMetrics job 2/2...');
   Network.fetchAll()
@@ -44,29 +46,29 @@ router.get('/networkMetrics', (req, res) => {
 /*===================UNCOMMENT TO MANUALLY SEND TWEET TO QUEUE===================*/
 /*this section and all subsequent manual queuing code will be removed prior to finalization*/
 
-const exampleTweet = {
-  id: 60001,
-  user_id: 900,
-  timestamp: '2017-12-15 22:02:52.056-08',
-  text: 'Today made me realize critically acclaimed foreign films are stupid'
-};
+// const exampleTweet = {
+//   id: 60001,
+//   user_id: 900,
+//   timestamp: '2017-12-15 22:02:52.056-08',
+//   text: 'Today made me realize critically acclaimed foreign films are stupid'
+// };
 
-const sqs = new AWS.SQS();
-router.get('/send', (req, res) => {
-  let params = {
-    MessageBody: JSON.stringify(exampleTweet),
-    QueueUrl: newTweetQueueUrl,
-    DelaySeconds: 0
-  };
+// const sqs = new AWS.SQS();
+// router.get('/send', (req, res) => {
+//   let params = {
+//     MessageBody: JSON.stringify(exampleTweet),
+//     QueueUrl: newTweetQueueUrl,
+//     DelaySeconds: 0
+//   };
 
-  sqs.sendMessage(params, (err, data) => {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(data);
-    }
-  });
-});
+//   sqs.sendMessage(params, (err, data) => {
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 /*=======================NETWORK METRICS ROUTE=======================*/
 
@@ -106,12 +108,11 @@ const tweetApp = Consumer.create({
       console.log('successfully saved new tweet: ', tweet.attributes);
       // find user id in metrics
       new Usermetric({user_id: tweet.attributes.user_id}).fetch()
+      // update tweet-related metrics
       .then(usermetric => {
-        console.log('tweeter metric: ', usermetric.attributes);
         teiSum = usermetric.attributes.tei_sum + TEI;
         tweetCount = usermetric.attributes.tweet_count + 1;
         cei = teiSum/tweetCount;
-        console.log('metrics: ', teiSum, tweetCount, cei);
         return new Usermetric({tei_sum: teiSum, tweet_count: tweetCount, content_extremity_index: cei})
         .save()
         .then(updatedMetric => {
@@ -247,31 +248,33 @@ favoriteApp.start();
 // favoriteApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND NETWORK TO QUEUE===================*/
-// const exampleNetwork = {
-//   follower_id: 40000,
-//   followed_id: 400,
-//   created_at: '2017-12-15 22:02:52.056-08',
-//   destroy: true
-// };
+const exampleNetwork = {
+  follower_id: 40000,
+  followed_id: 400,
+  created_at: '2017-12-15 22:02:52.056-08',
+  // destroy: true
+  destroy: false
+};
 
-// const sqs = new AWS.SQS();
-// router.get('/send', (req, res) => {
-//   let params = {
-//     MessageBody: JSON.stringify(exampleNetwork),
-//     QueueUrl: networkQueueUrl,
-//     DelaySeconds: 0
-//   };
+const sqs = new AWS.SQS();
+router.get('/send', (req, res) => {
+  let params = {
+    MessageBody: JSON.stringify(exampleNetwork),
+    QueueUrl: networkQueueUrl,
+    DelaySeconds: 0
+  };
 
-//   sqs.sendMessage(params, (err, data) => {
-//     if (err) {
-//       res.send(err);
-//     } else {
-//       res.send(data);
-//     }
-//   });
-// });
+  sqs.sendMessage(params, (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
 
-/*========================NETWORK  QUEUE HANDLER========================*/
+/*========================NETWORK QUEUE HANDLER========================*/
+let followedFollowerCount, followedIR, followedCEI, followerID, followerFollowingCount, followerIR, followerNEISum, followerNEI;
 
 const networkApp = Consumer.create({
   queueUrl: networkQueueUrl,
@@ -294,10 +297,35 @@ const networkApp = Consumer.create({
       })
     } else {
       // create new record
+      followerID = body.follower_id;
       new Network({follower_id: body.follower_id, followed_id: body.followed_id})
       .save()
       .then(network => {
         console.log('successfully saved new network: ', network.attributes);
+        // find the followed user in usermetrics table
+        new Usermetric({user_id: network.attributes.followed_id}).fetch()
+        .then(followed => {
+          followedFollowerCount = followed.attributes.follower_count + 1;
+          followedIR = followed.attributes.following_count/followedFollowerCount;
+          followedCEI = followed.attributes.content_extremity_index;
+          return new Usermetric({follower_count: followedFollowerCount, influencer_ratio: followedIR})
+          .save()
+          .then(followedRes => {
+            console.log('successfully updated followed record: ', followedRes.attributes);
+            new Usermetric({user_id: followerID}).fetch()
+            .then(follower => {
+              followerFollowingCount = follower.attributes.following_count + 1;
+              followerIR = followerFollowingCount/follower.attributes.follower_count;
+              followerNEISum = follower.attributes.nei_sum + followedCEI;
+              followerNEI = followerNEISum/follower.attributes.following_count;
+              return new Usermetric({following_count: followerFollowingCount, influencer_ratio: followerIR, nei_sum: followerNEISum, network_extremity_index: followerNEI})
+              .save()
+              .then(followerRes => {
+                console.log('successfully updated follower record: ', followerRes.attributes);
+              })
+            })
+          })
+        })
       })
       .catch(err => {
         console.log(err);
