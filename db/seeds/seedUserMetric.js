@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../db/helpers.js').randomNumber;
-const outfile = '../db/outusermetric.csv';
+const randomNumber = require('../helpers.js').randomNumber;
+const outfile = '../outusermetric.csv';
 
 /*===============GENERATE USER METRIC DATA==================*/
 /*=======================GOAL: 50,000=======================*/
@@ -19,9 +19,7 @@ const outfile = '../db/outusermetric.csv';
 *========================================================*/
 
 // Creates records with the following fields:
-// created_at, updated_at, user_id, content_extremity_index, influencer_ratio,
-  // network_extremity_index, total_favorites, bot_favorites, user_favorites,
-  // follower_count, following_count, bot_engagement_ratio
+// created_at, updated_at, user_id, TEI_sum, tweet_count, content_extremity_index, influencer_ratio, NEI_sum, network_extremity_index, total_favorites, bot_favorites, user_favorites, follower_count, following_count, bot_engagement_ratio
 
 let userMetric = '';
 
@@ -33,7 +31,7 @@ const generateRegularMetrics = () => {
     let extremeDist = randomNumber(100);
     // non-extreme user
     if (extremeDist > 75) {
-      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, 0, 10, 0, 20, 0, 20, 10, 100, 0\r\n`;
+      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, 0, 200, 0, 10, 0, 0, 20, 0, 20, 10, 100, 0\r\n`;
       fs.appendFileSync(outfile, userMetric, err => {
         console.log(err);
       });
@@ -42,13 +40,13 @@ const generateRegularMetrics = () => {
       let botDist = randomNumber(100);
       // prefers bots
       if (botDist > 75) {
-      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, 10, .75, 20, 20, 0, 10, 100, 1\r\n`;
+      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, -.75, 200, -.75, 10, -.75, -.75, 20, 20, 0, 10, 100, 1\r\n`;
         fs.appendFileSync(outfile, userMetric, err => {
           console.log(err);
         });       
         // does not prefer bots
       } else {
-        userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, 10, .75, 20, 0, 20, 10, 100, 0\r\n`;
+        userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, 200, .75, 10, .75, .75, 20, 0, 20, 10, 100, 0\r\n`;
         fs.appendFileSync(outfile, userMetric, err => {
           console.log(err);
         }); 
@@ -66,19 +64,19 @@ const generateInfluencerMetrics = () => {
     let random = randomNumber(100);
     // extreme influencer
     if (random < 31) {
-      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, .01, 0, 5, 0, 5, 100, 10, 0\r\n`;
+      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, 200, .75, .01, .75, 0, 5, 0, 5, 100, 10, 0\r\n`;
       fs.appendFileSync(outfile, userMetric, err => {
         console.log(err);
       });
       // bot
     } else if (random > 69) {
-      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, .01, 0, 5, 5, 0, 100, 10, 1\r\n`;
+      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, .75, 200, .75, .01, .75, 0, 5, 5, 0, 100, 10, 1\r\n`;
       fs.appendFileSync(outfile, userMetric, err => {
         console.log(err);
       });
       // non-extreme influencer
     } else {
-      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, 0, .01, 0, 5, 0, 5, 100, 10, 0\r\n`;
+      userMetric = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${i}, 0, 200, 0, .01, 0, 0, 5, 0, 5, 100, 10, 0\r\n`;
       fs.appendFileSync(outfile, userMetric, err => {
         console.log(err);
       });
@@ -90,5 +88,5 @@ const generateInfluencerMetrics = () => {
 /*===========UNCOMMENT TO GENERATE INFLUENCER METRICS===========*/
 // generateInfluencerMetrics();
 /*============UNCOMMENT TO GENERATE REGULAR METRICS==============*/
-// generateRegularMetrics();
+generateRegularMetrics();
 

@@ -44,29 +44,29 @@ router.get('/networkMetrics', (req, res) => {
 /*===================UNCOMMENT TO MANUALLY SEND TWEET TO QUEUE===================*/
 /*this section and all subsequent manual queuing code will be removed prior to finalization*/
 
-// const exampleTweet = {
-//   id: 60001,
-//   user_id: 900,
-//   timestamp: '2017-12-15 22:02:52.056-08',
-//   text: 'Today made me realize critically acclaimed foreign films are stupid'
-// };
+const exampleTweet = {
+  id: 60001,
+  user_id: 900,
+  timestamp: '2017-12-15 22:02:52.056-08',
+  text: 'Today made me realize critically acclaimed foreign films are stupid'
+};
 
-// const sqs = new AWS.SQS();
-// router.get('/send', (req, res) => {
-//   let params = {
-//     MessageBody: JSON.stringify(exampleTweet),
-//     QueueUrl: newTweetQueueUrl,
-//     DelaySeconds: 0
-//   };
+const sqs = new AWS.SQS();
+router.get('/send', (req, res) => {
+  let params = {
+    MessageBody: JSON.stringify(exampleTweet),
+    QueueUrl: newTweetQueueUrl,
+    DelaySeconds: 0
+  };
 
-//   sqs.sendMessage(params, (err, data) => {
-//     if (err) {
-//       res.send(err);
-//     } else {
-//       res.send(data);
-//     }
-//   });
-// });
+  sqs.sendMessage(params, (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
 
 /*=======================NETWORK METRICS ROUTE=======================*/
 
@@ -84,23 +84,40 @@ const extremeTEIWords = {
   'love': 1
 };
 
+let TEI, teiSum, tweetCount, cei;
+
 const tweetApp = Consumer.create({
   queueUrl: newTweetQueueUrl,
   handleMessage: (message, done) => {
     // calculate tweet extremity index
-    let TEI = 0;
     body = JSON.parse(message.Body);
     for (word in extremeTEIWords) {
       if (body.text.includes(word)) {
         TEI = extremeTEIWords[word];
         console.log('result: ', word, TEI);
+      } else {
+        TEI = 0;
       }
     }
     // insert tweet into database
     new Tweet({id: body.id, user_id: body.user_id, text: body.text, tweet_extremity_index: TEI})
-    .save()
+    .save(null, {method: 'insert'})
     .then(tweet => {
       console.log('successfully saved new tweet: ', tweet.attributes);
+      // find user id in metrics
+      new Usermetric({user_id: tweet.attributes.user_id}).fetch()
+      .then(usermetric => {
+        console.log('tweeter metric: ', usermetric.attributes);
+        teiSum = usermetric.attributes.tei_sum + TEI;
+        tweetCount = usermetric.attributes.tweet_count + 1;
+        cei = teiSum/tweetCount;
+        console.log('metrics: ', teiSum, tweetCount, cei);
+        return new Usermetric({tei_sum: teiSum, tweet_count: tweetCount, content_extremity_index: cei})
+        .save()
+        .then(updatedMetric => {
+          console.log('successfully updated metrics: ', updatedMetric.attributes);
+        })
+      })
     })
     .catch(err => {
       console.log(err);
@@ -121,39 +138,41 @@ tweetApp.start();
 // tweetApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND FAVORITE TO QUEUE===================*/
-const exampleFavorite = {
-  tweet_id: 12345,
-  favoriter_id: 50000,
-  favorited_id: 27325,
-  created_at: '2017-12-15 22:02:52.056-08',
-  destroy: false
-  // destroy:true
-};
+// const exampleFavorite = {
+//   tweet_id: 12345,
+//   favoriter_id: 50000,
+//   favorited_id: 27325,
+//   created_at: '2017-12-15 22:02:52.056-08',
+//   // destroy: false
+//   destroy:true
+// };
 
-const sqs = new AWS.SQS();
-router.get('/send', (req, res) => {
-  let params = {
-    MessageBody: JSON.stringify(exampleFavorite),
-    QueueUrl: newFavoriteQueueUrl,
-    DelaySeconds: 0
-  };
+// const sqs = new AWS.SQS();
+// router.get('/send', (req, res) => {
+//   let params = {
+//     MessageBody: JSON.stringify(exampleFavorite),
+//     QueueUrl: newFavoriteQueueUrl,
+//     DelaySeconds: 0
+//   };
 
-  sqs.sendMessage(params, (err, data) => {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(data);
-    }
-  });
-});
+//   sqs.sendMessage(params, (err, data) => {
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 /*========================FAVORITES QUEUE HANDLER========================*/
+
+// note that this does not yet cascade favorite destruction
 
 const favoriteApp = Consumer.create({
   queueUrl: newFavoriteQueueUrl,
   handleMessage: (message, done) => {
     let body = JSON.parse(message.Body);
-    let bot, favoriter, favorited, totalFavorites, botFavorites, userFavorites;
+    let bot, favoriter, favorited, totalFavorites, botFavorites, userFavorites, ber;
     if (body.destroy) {
       // delete record
       new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id}).fetch()
@@ -198,8 +217,9 @@ const favoriteApp = Consumer.create({
               userFavorites = favoriterMetric.attributes.user_favorites + 1;
               botFavorites = favoriterMetric.attributes.bot_favorites;
             }
+            ber = botFavorites/userFavorites;
             console.log('fave counts: ', totalFavorites, botFavorites, userFavorites);
-            return new Usermetric({total_favorites: totalFavorites, bot_favorites: botFavorites, user_favorites: userFavorites})
+            return new Usermetric({total_favorites: totalFavorites, bot_favorites: botFavorites, user_favorites: userFavorites, bot_engagement_ratio: ber})
             .save()
           })
           // return success message
