@@ -170,21 +170,24 @@ const favoriteApp = Consumer.create({
         done();
       })
     } else {
-      // create new record
+      // create new record and perform associated updates
       new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id, favorited_id: body.favorited_id})
       .save()
+      // fetch user record for favorited user
       .then(favorite => {
         console.log('successfully saved new favorite: ', favorite.attributes);
         favoriter = favorite.attributes.favoriter_id;
         favorited = favorite.attributes.favorited_id;
-        console.log('favoriter: ', favoriter, ' favorited: ', favorited);
         new User({id: favorited}).fetch()
+        // determine whether favorited user is a bot account
         .then(favoritedUser => {
           console.log('favorited user: ', favoritedUser.attributes);
           bot = favoritedUser.attributes.bot_account;
         })
+        // fetch user metric record for favoriter 
         .then(result => {
           new Usermetric({user_id: favoriter}).fetch()
+          // update favorites counts
           .then(favoriterMetric => {
             console.log('favoriter metric: ', favoriterMetric.attributes);
             totalFavorites = favoriterMetric.attributes.total_favorites + 1;
@@ -196,10 +199,10 @@ const favoriteApp = Consumer.create({
               botFavorites = favoriterMetric.attributes.bot_favorites;
             }
             console.log('fave counts: ', totalFavorites, botFavorites, userFavorites);
-            //update query here
             return new Usermetric({total_favorites: totalFavorites, bot_favorites: botFavorites, user_favorites: userFavorites})
             .save()
           })
+          // return success message
           .then(updatedMetric => {
             console.log('successfully updated metrics: ', updatedMetric.attributes);
           });
