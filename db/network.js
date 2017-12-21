@@ -7,10 +7,10 @@ const Network = Bookshelf.Model.extend({
   hasTimestamps: true,
   users: function() {
     return this.belongsTo('User');
-  },
-  networkmetrics: function() {
-    return this.hasOne('Networkmetric');
   }
+  // networkmetrics: function() {
+  //   return this.hasOne('Networkmetric');
+  // }
 });
 
 

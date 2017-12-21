@@ -1,12 +1,12 @@
 const fs = require('fs');
-const randomNumber = require('../db/helpers.js').randomNumber;
-const outfile = '../db/outTweet.csv';
+const randomNumber = require('../helpers.js').randomNumber;
+const outfile = '../outTweet.csv';
 
 /*===============GENERATE TWEETS DATA================*/
 /*=====================GOAL: 10M=====================*/
 
 // Creates records with the following fields:
-// id, user_id, text, tweet_extremity_index
+// id, user_id, text, tweet_extremity_index, favorites_count
 
 /*==================Tweet word bank==================*/
 
@@ -54,13 +54,14 @@ const generateTweets = () => {
     prefaceIndex = randomNumber(4);
     nounIndex = randomNumber(8);
     wordIndex = randomNumber(4);
+    favoritesCount = randomNumber(10);
     // use extreme flag to distribute tweet sentiment
     extremeFlag = randomNumber(100);
     // divides tweets into approximately 76% 'extreme in sentiment' and the remainder 'neutral in sentiment'
     if (extremeFlag < 77) {
-      tweet = `${i}, ${user_id}, ${makeTweet(prefaces[prefaceIndex], nouns[nounIndex], extremeWords[wordIndex])}, .75\r\n`;
+      tweet = `${i}, ${user_id}, ${makeTweet(prefaces[prefaceIndex], nouns[nounIndex], extremeWords[wordIndex])}, .75, ${favoritesCount}\r\n`;
     } else {
-      tweet = `${i}, ${user_id}, ${makeTweet(prefaces[prefaceIndex], nouns[nounIndex], neutralWords[wordIndex])}, 0\r\n`;
+      tweet = `${i}, ${user_id}, ${makeTweet(prefaces[prefaceIndex], nouns[nounIndex], neutralWords[wordIndex])}, 0, ${favoritesCount}\r\n`;
     }
     fs.appendFileSync(outfile, tweet, err => {
       console.log(err);

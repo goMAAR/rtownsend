@@ -20,7 +20,7 @@ const updateNetworkMetrics = {
       });
     });
   },
-
+      
   init: () => {
     updateNetworkMetrics.scheduleJob();
   }
