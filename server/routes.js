@@ -1,7 +1,8 @@
 const router = require('express').Router();
 const _ = require('underscore');
 const Promise = require('bluebird');
-const bodyParser = require('body-parser');
+const bookshelf = require('../db/bookshelf.js');
+const pm = require('bookshelf-pagemaker')(bookshelf);
 
 const Tweet = require('../db/tweet.js');
 const User = require('../db/user.js');
@@ -23,12 +24,29 @@ const networkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/follow
 
 AWS.config.loadFromPath(__dirname + '/config.json');
 
+/*modularize this later*/
+
+/*===========================CALCULATE NETWORK METRICS===========================*/
+
+router.get('/networkMetrics', (req, res) => {
+  console.log('Executing updateNetworkMetrics job 2/2...');
+  Network.fetchAll()
+  .then(networks => {
+    console.log(networks);
+    res.send(networks);
+  })
+  .catch(err => {
+    console.log(err);
+  })
+
+});
+
 /*===================UNCOMMENT TO MANUALLY SEND TWEET TO QUEUE===================*/
 /*this section and all subsequent manual queuing code will be removed prior to finalization*/
 
 // const exampleTweet = {
-//   id: 60000,
-//   user_id: 3456,
+//   id: 60001,
+//   user_id: 900,
 //   timestamp: '2017-12-15 22:02:52.056-08',
 //   text: 'Today made me realize critically acclaimed foreign films are stupid'
 // };
@@ -49,6 +67,10 @@ AWS.config.loadFromPath(__dirname + '/config.json');
 //     }
 //   });
 // });
+
+/*=======================NETWORK METRICS ROUTE=======================*/
+
+
 
 /*========================TWEET QUEUE HANDLER========================*/
 
@@ -99,36 +121,39 @@ tweetApp.start();
 // tweetApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND FAVORITE TO QUEUE===================*/
-// const exampleFavorite = {
-//   tweet_id: 12345,
-//   favoriter_id: 50000,
-//   created_at: '2017-12-15 22:02:52.056-08',
-//   destroy: true
-// };
+const exampleFavorite = {
+  tweet_id: 12345,
+  favoriter_id: 50000,
+  favorited_id: 27325,
+  created_at: '2017-12-15 22:02:52.056-08',
+  destroy: false
+  // destroy:true
+};
 
-// const sqs = new AWS.SQS();
-// router.get('/send', (req, res) => {
-//   let params = {
-//     MessageBody: JSON.stringify(exampleFavorite),
-//     QueueUrl: newFavoriteQueueUrl,
-//     DelaySeconds: 0
-//   };
+const sqs = new AWS.SQS();
+router.get('/send', (req, res) => {
+  let params = {
+    MessageBody: JSON.stringify(exampleFavorite),
+    QueueUrl: newFavoriteQueueUrl,
+    DelaySeconds: 0
+  };
 
-//   sqs.sendMessage(params, (err, data) => {
-//     if (err) {
-//       res.send(err);
-//     } else {
-//       res.send(data);
-//     }
-//   });
-// });
+  sqs.sendMessage(params, (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
 
 /*========================FAVORITES QUEUE HANDLER========================*/
 
 const favoriteApp = Consumer.create({
   queueUrl: newFavoriteQueueUrl,
   handleMessage: (message, done) => {
-    body = JSON.parse(message.Body);
+    let body = JSON.parse(message.Body);
+    let bot, favoriter, favorited, totalFavorites, botFavorites, userFavorites;
     if (body.destroy) {
       // delete record
       new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id}).fetch()
@@ -146,10 +171,39 @@ const favoriteApp = Consumer.create({
       })
     } else {
       // create new record
-      new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id})
+      new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id, favorited_id: body.favorited_id})
       .save()
       .then(favorite => {
         console.log('successfully saved new favorite: ', favorite.attributes);
+        favoriter = favorite.attributes.favoriter_id;
+        favorited = favorite.attributes.favorited_id;
+        console.log('favoriter: ', favoriter, ' favorited: ', favorited);
+        new User({id: favorited}).fetch()
+        .then(favoritedUser => {
+          console.log('favorited user: ', favoritedUser.attributes);
+          bot = favoritedUser.attributes.bot_account;
+        })
+        .then(result => {
+          new Usermetric({user_id: favoriter}).fetch()
+          .then(favoriterMetric => {
+            console.log('favoriter metric: ', favoriterMetric.attributes);
+            totalFavorites = favoriterMetric.attributes.total_favorites + 1;
+            if (bot) {
+              botFavorites = favoriterMetric.attributes.bot_favorites + 1;
+              userFavorites = favoriterMetric.attributes.user_favorites;
+            } else { 
+              userFavorites = favoriterMetric.attributes.user_favorites + 1;
+              botFavorites = favoriterMetric.attributes.bot_favorites;
+            }
+            console.log('fave counts: ', totalFavorites, botFavorites, userFavorites);
+            //update query here
+            return new Usermetric({total_favorites: totalFavorites, bot_favorites: botFavorites, user_favorites: userFavorites})
+            .save()
+          })
+          .then(updatedMetric => {
+            console.log('successfully updated metrics: ', updatedMetric.attributes);
+          });
+        });
       })
       .catch(err => {
         console.log(err);
