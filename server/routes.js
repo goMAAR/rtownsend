@@ -274,7 +274,7 @@ router.get('/send', (req, res) => {
 });
 
 /*========================NETWORK QUEUE HANDLER========================*/
-let followedFollowerCount, followedIR, followedCEI, followerID, followerFollowingCount, followerIR, followerNEISum, followerNEI;
+let followedFollowerCount, followedIR, followedCEI, followerID, followedID, followerFollowingCount, followerIR, followerNEISum, followerNEI;
 
 const networkApp = Consumer.create({
   queueUrl: networkQueueUrl,
@@ -298,30 +298,34 @@ const networkApp = Consumer.create({
     } else {
       // create new record
       followerID = body.follower_id;
-      new Network({follower_id: body.follower_id, followed_id: body.followed_id})
-      .save()
-      .then(network => {
-        console.log('successfully saved new network: ', network.attributes);
-        // find the followed user in usermetrics table
-        new Usermetric({user_id: network.attributes.followed_id}).fetch()
-        .then(followed => {
-          followedFollowerCount = followed.attributes.follower_count + 1;
-          followedIR = followed.attributes.following_count/followedFollowerCount;
-          followedCEI = followed.attributes.content_extremity_index;
-          return new Usermetric({follower_count: followedFollowerCount, influencer_ratio: followedIR})
-          .save()
-          .then(followedRes => {
-            console.log('successfully updated followed record: ', followedRes.attributes);
-            new Usermetric({user_id: followerID}).fetch()
-            .then(follower => {
-              followerFollowingCount = follower.attributes.following_count + 1;
-              followerIR = followerFollowingCount/follower.attributes.follower_count;
-              followerNEISum = follower.attributes.nei_sum + followedCEI;
-              followerNEI = followerNEISum/follower.attributes.following_count;
-              return new Usermetric({following_count: followerFollowingCount, influencer_ratio: followerIR, nei_sum: followerNEISum, network_extremity_index: followerNEI})
+      followedID = body.followed_id;
+      return new Usermetric({user_id: followedID}).fetch()
+      // updated user metrics for followed user
+      .then(followed => {
+        console.log('followed: ', followed.attributes);
+        followedFollowerCount = followed.attributes.follower_count + 1;
+        followedIR = followed.attributes.following_count/followedFollowerCount;
+        followedCEI = followed.attributes.content_extremity_index;
+        return new Usermetric({follower_count: followedFollowerCount, influencer_ratio: followedIR})
+        .save()
+        // update user metrics for follower user
+        .then(followedRes => {
+          console.log('successfully updated followed record: ', followedRes.attributes);
+          new Usermetric({user_id: followerID}).fetch()
+          .then(follower => {
+            followerFollowingCount = follower.attributes.following_count + 1;
+            followerIR = followerFollowingCount/follower.attributes.follower_count;
+            followerNEISum = follower.attributes.nei_sum + followedCEI;
+            followerNEI = followerNEISum/follower.attributes.following_count;
+            return new Usermetric({following_count: followerFollowingCount, influencer_ratio: followerIR, nei_sum: followerNEISum, network_extremity_index: followerNEI})
+            .save()
+            // add new network
+            .then(followerRes => {
+              console.log('successfully updated follower record: ', followerRes.attributes);
+              new Network({follower_id: body.follower_id, followed_id: body.followed_id, followed_influencer_ratio: followedIR})
               .save()
-              .then(followerRes => {
-                console.log('successfully updated follower record: ', followerRes.attributes);
+              .then(network => {
+                console.log('successfully saved new network: ', network.attributes);
               })
             })
           })
