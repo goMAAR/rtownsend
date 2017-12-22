@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outNetwork.csv';
+const randomNumber = require('../helpers.js').randomNumber;
+const outfile = '../outNetwork.csv';
 
 /*===============GENERATE FAVORITES DATA==================*/
 /*=====================CONSTRAINTS=====================*/
@@ -20,7 +20,7 @@ const generateInfluencerFollows = () => {
     date = faker.date.recent().toISOString();
     // Influencers follow 10 users
     for (let j = 0; j < 10; j++) {
-      network = `${date}, ${date}, ${i}, ${randomNumber(50000) + 1}\r\n`;
+      network = `${date}, ${date}, ${i}, ${randomNumber(50000) + 1}, ${randomNumber(10)}\r\n`;
       fs.appendFileSync(outfile, network, err => {
         console.log(err);
       });
@@ -35,7 +35,7 @@ const generateInfluencerFollowers = () => {
     date = faker.date.recent().toISOString();
     // Non-Influencers follow 100 users
     for (let j = 0; j < 100; j++) {
-      network = `${date}, ${date}, ${i}, ${randomNumber(50000) + 1}\r\n`;
+      network = `${date}, ${date}, ${i}, ${randomNumber(50000) + 1}, ${randomNumber(10)}\r\n`;
       fs.appendFileSync(outfile, network, err => {
         console.log(err);
       });
@@ -45,6 +45,6 @@ const generateInfluencerFollowers = () => {
 }
 
 /*===========UNCOMMENT TO GENERATE INFLUENCER FOLLOWERS===========*/
-// generateInfluencerFollowers();
+generateInfluencerFollowers();
 /*===========UNCOMMENT TO GENERATE INFLUENCER FOLLOWS=============*/
 // generateInfluencerFollows();

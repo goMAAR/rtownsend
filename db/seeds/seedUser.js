@@ -1,6 +1,6 @@
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outUser.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/outUser.csv';
 
 /*===============GENERATE USER DATA==================*/
 /*=====================GOAL: 50K=====================*/

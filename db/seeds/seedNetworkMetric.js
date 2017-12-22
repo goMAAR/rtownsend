@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outnetworkmetric.csv';
+const randomNumber = require('../db/helpers.js').randomNumber;
+const outfile = '../db/outnetworkmetric.csv';
 
 /*===============GENERATE NETWORK METRIC DATA==================*/
 /*======================GOAL: 2,750,000=====================*/

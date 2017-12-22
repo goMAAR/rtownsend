@@ -3,10 +3,17 @@ const Bookshelf = require('./bookshelf.js')
 require('./network.js');
 const Networkmetric = Bookshelf.Model.extend({
   tableName: 'networkmetrics',
-  timestamps: true,
+  hasTimestamps: true,
   networks: function() {
     return this.belongsTo('Network');
   }
 });
 
-module.exports = Bookshelf.model('Networkmetric', Networkmetric);
+const Networkmetrics = Bookshelf.Collection.extend({
+  model: Networkmetric
+});
+
+module.exports = {
+  Networkmetric: Bookshelf.model('Networkmetric', Networkmetric),
+  Networkmetrics: Bookshelf.collection('Networkmetrics', Networkmetrics)
+};

@@ -1,7 +1,7 @@
 const faker = require('faker');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/favorite.csv';
+const randomNumber = require('../helpers.js').randomNumber;
+const outfile = '../outfave.csv';
 
 /*===============GENERATE NETWORK DATA==================*/
 /*====================GOAL: 275,000===================*/
@@ -25,7 +25,7 @@ const generateRegularFavorites = () => {
     if (randomNumber(100) < 25) {
       // create 20 favorites per user
       for (let j = 0; j < 20; j++) {
-        favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${i}\r\n`;
+        favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${i}, ${randomNumber(50000) + 1}\r\n`;
         fs.appendFileSync(outfile, favorite, err => {
           console.log(err);
         });
@@ -34,7 +34,7 @@ const generateRegularFavorites = () => {
       // the other 76% favorite less frequently
       // create 5 favorites per user
       for (let k = 0; k < 5; k++) {
-        favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${i}\r\n`;
+        favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${i}, ${randomNumber(50000) + 1}\r\n`;
         fs.appendFileSync(outfile, favorite, err => {
           console.log(err);
         }); 
@@ -49,7 +49,7 @@ const generateInfluencerFavorites = () => {
   for (var i = 1; i < 50001; i+=2) {
     // Create 2 favorites per user
     for (let j = 0; j < 2; j++) {
-      favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${i}\r\n`;
+      favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${i}, ${randomNumber(50000) + 1}\r\n`;
       fs.appendFileSync(outfile, favorite, err => {
         console.log(err);
       });
@@ -62,7 +62,7 @@ const generateRandomFavorites = () => {
   // Generate 10k random favorites for goal of 275k total favorites
   for (var i = 0; i < 10000; i++) {
     random = randomNumber(50000);
-    favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${random}\r\n`;
+    favorite = `${faker.date.recent().toISOString()}, ${faker.date.recent().toISOString()}, ${randomNumber(10000000) + 1}, ${random}, ${randomNumber(50000) + 1}\r\n`;
     fs.appendFileSync(outfile, favorite, err => {
       console.log(err);
     });

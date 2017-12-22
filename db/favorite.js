@@ -4,7 +4,7 @@ require('./tweet.js');
 require('./user.js');
 const Favorite = Bookshelf.Model.extend({
   tableName: 'favorites',
-  timestamps: true,
+  hasTimestamps: true,
   tweets: function() {
     return this.belongsTo('Tweet');
   },

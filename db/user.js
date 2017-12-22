@@ -4,6 +4,7 @@ require('./tweet.js');
 require('./usermetric.js');
 require('./favorite.js');
 require('./network.js');
+
 const User = Bookshelf.Model.extend({
   tableName: 'users',
   tweets: function() {

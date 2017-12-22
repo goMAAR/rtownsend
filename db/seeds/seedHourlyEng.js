@@ -1,7 +1,7 @@
 const moment = require('moment');
 const fs = require('fs');
-const randomNumber = require('../server/helpers.js').randomNumber;
-const outfile = '../server/outhourlyeng.csv';
+const randomNumber = require('../helpers.js').randomNumber;
+const outfile = '../outhourlyeng.csv';
 
 /*===============GENERATE USER HOURLY ENGAGEMENT DATA==================*/
 /*=======================GOAL: 2,160 (HOURS)=======================*/
@@ -11,7 +11,7 @@ const outfile = '../server/outhourlyeng.csv';
 *========================================================*/
 
 // Creates records with the following fields:
-// date, hour, avg_BER
+// date, hour, avg_BER, BER_sum, users_count
 
 let hourlyEngagement = '';
 
@@ -21,7 +21,7 @@ const generateHourlyEngagements = () => {
   for (let i = 0; i < 90; i++) {
     // Inner loop represents number of hours to generate per day (24)
     for (let j = 1; j < 25; j++) {
-      hourlyEngagement = `${date.toISOString()}, ${j}, ${randomNumber(20)}\r\n`;
+      hourlyEngagement = `${j}, ${randomNumber(20)}, ${date.toISOString()}, ${randomNumber(500)}, ${randomNumber(100)}\r\n`;
       fs.appendFileSync(outfile, hourlyEngagement, err => {
         console.log(err);
       });
