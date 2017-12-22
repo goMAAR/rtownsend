@@ -45,6 +45,6 @@ const generateInfluencerFollowers = () => {
 }
 
 /*===========UNCOMMENT TO GENERATE INFLUENCER FOLLOWERS===========*/
-// generateInfluencerFollowers();
+generateInfluencerFollowers();
 /*===========UNCOMMENT TO GENERATE INFLUENCER FOLLOWS=============*/
-generateInfluencerFollows();
+// generateInfluencerFollows();

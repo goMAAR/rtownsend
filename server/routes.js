@@ -1,8 +1,9 @@
 const router = require('express').Router();
 const _ = require('underscore');
 const Promise = require('bluebird');
-const bookshelf = require('../db/bookshelf.js');
-const pm = require('bookshelf-pagemaker')(bookshelf);
+const axios = require('axios');
+
+const redis = require('../db/redis/index.js');
 
 const Tweet = require('../db/tweet.js');
 const User = require('../db/user.js');
@@ -21,25 +22,58 @@ const AWS = require('aws-sdk');
 const newTweetQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/newTweets';
 const newFavoriteQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/newFavorite';
 const networkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/follow';
+const tempNetworkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/tempNetwork';
 
 AWS.config.loadFromPath(__dirname + '/config.json');
 
-/*modularize this later*/
+/*===========================SEND NETWORK METRICS===========================*/
 
-/*===========================CALCULATE NETWORK METRICS===========================*/
+/*This route will be hit every 10 minutes by an automated worker*/
 
-/*super incomplete*/
+const networkPost = new AWS.SQS();
 
-router.get('/networkMetrics', (req, res) => {
+router.get('/network', (req, res) => {
   console.log('Executing updateNetworkMetrics job 2/2...');
-  Network.fetchAll()
-  .then(networks => {
-    console.log(networks);
-    res.send(networks);
+
+  let newNetworks = [];
+
+  // get an array of all keys in redis cache
+  redis.keysAsync('*')
+  .then(keys => {
+    console.log(`successfully feched ${keys.length} keys`);
+    // add the object at each key to newNetworks array
+    return Promise.each(keys, key => {
+      return redis.hgetallAsync(key)
+      .then(obj => {
+        newNetworks.push(obj);
+      });
+    })
+    .then(result => {
+      console.log('successfully compiled networks batch');
+      // submit newNetworks array to Social Network Processing queue
+      let params = {
+        MessageBody: JSON.stringify({network: newNetworks}),
+        QueueUrl: tempNetworkQueueUrl,
+        DelaySeconds: 0
+      };
+      networkPost.sendMessage(params, (err, data) => {
+        if (err) {
+          res.send(err);
+        } else {
+          console.log('successfully posted networks batch');
+          res.send(data);
+        }
+      });
+      // flush redis cache
+      redis.flushdbAsync()
+      .then(result => {
+        console.log('successfully flushed redis cache');
+      })
+    });
   })
   .catch(err => {
     console.log(err);
-  })
+  });
 
 });
 
@@ -69,10 +103,6 @@ router.get('/networkMetrics', (req, res) => {
 //     }
 //   });
 // });
-
-/*=======================NETWORK METRICS ROUTE=======================*/
-
-
 
 /*========================TWEET QUEUE HANDLER========================*/
 
@@ -169,6 +199,8 @@ tweetApp.start();
 
 // note that this does not yet cascade favorite destruction
 
+// need to also update the hour's ber 
+
 const favoriteApp = Consumer.create({
   queueUrl: newFavoriteQueueUrl,
   handleMessage: (message, done) => {
@@ -256,37 +288,37 @@ favoriteApp.start();
 // favoriteApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND NETWORK TO QUEUE===================*/
-// const exampleNetwork = {
-//   follower_id: 40000,
-//   followed_id: 400,
-//   created_at: '2017-12-15 22:02:52.056-08',
-//   // destroy: true
-//   destroy: false
-// };
+const exampleNetwork = {
+  follower_id: 40005,
+  followed_id: 400,
+  created_at: '2017-12-15 22:02:52.056-08',
+  destroy: true
+  // destroy: false
+};
 
-// const sqs = new AWS.SQS();
-// router.get('/send', (req, res) => {
-//   let params = {
-//     MessageBody: JSON.stringify(exampleNetwork),
-//     QueueUrl: networkQueueUrl,
-//     DelaySeconds: 0
-//   };
+const sqs = new AWS.SQS();
+router.get('/send', (req, res) => {
+  let params = {
+    MessageBody: JSON.stringify(exampleNetwork),
+    QueueUrl: networkQueueUrl,
+    DelaySeconds: 0
+  };
 
-//   sqs.sendMessage(params, (err, data) => {
-//     if (err) {
-//       res.send(err);
-//     } else {
-//       res.send(data);
-//     }
-//   });
-// });
+  sqs.sendMessage(params, (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
 
 /*========================NETWORK QUEUE HANDLER========================*/
-let followedFollowerCount, followedIR, followedCEI, followerID, followedID, followerFollowingCount, followerIR, followerNEISum, followerNEI;
 
 const networkApp = Consumer.create({
   queueUrl: networkQueueUrl,
   handleMessage: (message, done) => {
+    let followedFollowerCount, followedIR, followedCEI, followerID, followedID, followerFollowingCount, followerIR, followerNEISum, followerNEI;
     body = JSON.parse(message.Body);
     if (body.destroy) {
       // delete record
@@ -310,7 +342,6 @@ const networkApp = Consumer.create({
       return new Usermetric({user_id: followedID}).fetch()
       // updated user metrics for followed user
       .then(followed => {
-        console.log('followed: ', followed.attributes);
         followedFollowerCount = followed.attributes.follower_count + 1;
         followedIR = followed.attributes.following_count/followedFollowerCount;
         followedCEI = followed.attributes.content_extremity_index;
@@ -318,7 +349,7 @@ const networkApp = Consumer.create({
         .save()
         // update user metrics for follower user
         .then(followedRes => {
-          console.log('successfully updated followed record: ', followedRes.attributes);
+          console.log('successfully updated followed record');
           new Usermetric({user_id: followerID}).fetch()
           .then(follower => {
             followerFollowingCount = follower.attributes.following_count + 1;
@@ -328,12 +359,25 @@ const networkApp = Consumer.create({
             return new Usermetric({following_count: followerFollowingCount, influencer_ratio: followerIR, nei_sum: followerNEISum, network_extremity_index: followerNEI})
             .save()
             // add new network
-            .then(followerRes => {
-              console.log('successfully updated follower record: ', followerRes.attributes);
+            .then(updatedFollower => {
+              console.log('successfully updated follower record');
+              // insert network object into Redis cache
+              redis.hmset(updatedFollower.attributes.id, {
+                'follower_id': body.follower_id, 
+                'followed_id': body.followed_id, 
+                'followed_influencer_ratio': followedIR
+              }, (err, reply) => {
+                if (err) {
+                  console.log(err);
+                } else {
+                  console.log(reply);
+                }
+              });
               new Network({follower_id: body.follower_id, followed_id: body.followed_id, followed_influencer_ratio: followedIR})
               .save()
               .then(network => {
-                console.log('successfully saved new network: ', network.attributes);
+                console.log('successfully saved new network');
+                done();
               })
             })
           })
@@ -342,7 +386,6 @@ const networkApp = Consumer.create({
       .catch(err => {
         console.log(err);
       });
-      done();
     }
   }
 });
@@ -389,4 +432,3 @@ networkApp.start();
 // });
 
 module.exports = router;
-

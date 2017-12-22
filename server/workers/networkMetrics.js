@@ -7,11 +7,11 @@ const schedule = require('node-schedule');
 
 const updateNetworkMetrics = {
   scheduleJob: () => {
-    rule = '* * * * *';
+    rule = '*/10 * * * *';
 
     let job = schedule.scheduleJob(rule, () => {
-      console.log('Executing updateNetworkMetrics job 1/2...');
-      axios.get('/networkMetrics', {})
+      console.log('Executing send network metrics job 1/2...');
+      axios.get('http://localhost:4568/network', {})
       .then(res => {
         console.log(res);
       })
