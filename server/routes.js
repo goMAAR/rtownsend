@@ -7,7 +7,7 @@ const redis = require('../db/redis/index.js');
 
 const Tweet = require('../db/tweet.js');
 const User = require('../db/user.js');
-const Dailyengagement = require('../db/dailyengagement.js');
+const Currentengagement = require('../db/currentengagement.js');
 const Favorite = require('../db/favorite.js');
 const Hourlyengagement = require('../db/hourlyengagement.js');
 const Network = require('../db/network.js');
@@ -25,6 +25,51 @@ const networkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/follow
 const tempNetworkQueueUrl = 'https://sqs.us-east-2.amazonaws.com/202319733273/tempNetwork';
 
 AWS.config.loadFromPath(__dirname + '/config.json');
+
+/*========================CREATE NEW SENTIMENT METRIC=======================*/
+
+/*This route will be hit every hour by an automated worker*/
+
+router.get('/sentiment', (req, res) => {
+  //calculate current date and hour
+  let date = new Date();
+  hour = date.getHours();
+  date = date.toISOString();
+  console.log(hour, date);
+  //fetch current record and add to hourly records table
+  new Currentengagement().fetchAll()
+  .then(record => {
+    if (!record.attributes) {
+      console.log('no record found');
+      new Currentengagement({date: date, avg_BER: 0, hour: hour, ber_sum: 0, favorites_count: 0})
+        .save()
+        .then(record => {
+          console.log('successfully created new sentiment record');
+        })
+        .error(err => {
+          console.log(err);
+        })
+        res.sendStatus(200);
+    } else {
+      new Hourlyengagement({date: record.attributes.date, avg_BER: record.attributes.avg_BER, hour: record.attributes.hour, ber_sum: record.attributes.ber_sum, favorites_count: record.attributes.favorites_count})
+      .save()
+      // over-write previous current engagement record
+      .then(result => {
+        console.log('successfully saved result: ', result.attributes);
+        new Currentengagement({date: date, avg_BER: 0, hour: hour, ber_sum: 0, favorites_count: 0})
+        .save()
+        .then(record => {
+          console.log('successfully created new sentiment record');
+        })
+        .error(err => {
+          console.log(err);
+        })
+        res.sendStatus(200);
+      })
+    }
+  })
+  // update record in db
+});
 
 /*===========================SEND NETWORK METRICS===========================*/
 
@@ -116,17 +161,15 @@ const extremeTEIWords = {
   'love': 1
 };
 
-let TEI, teiSum, tweetCount, cei;
-
 const tweetApp = Consumer.create({
   queueUrl: newTweetQueueUrl,
   handleMessage: (message, done) => {
+    let TEI, teiSum, tweetCount, cei;
     // calculate tweet extremity index
     body = JSON.parse(message.Body);
     for (word in extremeTEIWords) {
       if (body.text.includes(word)) {
         TEI = extremeTEIWords[word];
-        console.log('result: ', word, TEI);
       } else {
         TEI = 0;
       }
@@ -135,7 +178,7 @@ const tweetApp = Consumer.create({
     new Tweet({id: body.id, user_id: body.user_id, text: body.text, tweet_extremity_index: TEI})
     .save(null, {method: 'insert'})
     .then(tweet => {
-      console.log('successfully saved new tweet: ', tweet.attributes);
+      console.log('successfully saved new tweet');
       // find user id in metrics
       new Usermetric({user_id: tweet.attributes.user_id}).fetch()
       // update tweet-related metrics
@@ -146,7 +189,7 @@ const tweetApp = Consumer.create({
         return new Usermetric({tei_sum: teiSum, tweet_count: tweetCount, content_extremity_index: cei})
         .save()
         .then(updatedMetric => {
-          console.log('successfully updated metrics: ', updatedMetric.attributes);
+          console.log('successfully updated metrics');
         })
       })
     })
@@ -164,9 +207,9 @@ tweetApp.on('error', err => {
 });
 
 // start polling queue
-tweetApp.start();
+// tweetApp.start();
 // uncomment to stop polling queue
-// tweetApp.stop();
+tweetApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND FAVORITE TO QUEUE===================*/
 // const exampleFavorite = {
@@ -283,35 +326,35 @@ favoriteApp.on('error', err => {
 });
 
 // start polling queue
-favoriteApp.start();
+// favoriteApp.start();
 // uncomment to stop polling queue
-// favoriteApp.stop();
+favoriteApp.stop();
 
 /*===================UNCOMMENT TO MANUALLY SEND NETWORK TO QUEUE===================*/
-const exampleNetwork = {
-  follower_id: 40005,
-  followed_id: 400,
-  created_at: '2017-12-15 22:02:52.056-08',
-  destroy: true
-  // destroy: false
-};
+// const exampleNetwork = {
+//   follower_id: 40005,
+//   followed_id: 400,
+//   created_at: '2017-12-15 22:02:52.056-08',
+//   destroy: true
+//   // destroy: false
+// };
 
-const sqs = new AWS.SQS();
-router.get('/send', (req, res) => {
-  let params = {
-    MessageBody: JSON.stringify(exampleNetwork),
-    QueueUrl: networkQueueUrl,
-    DelaySeconds: 0
-  };
+// const sqs = new AWS.SQS();
+// router.get('/send', (req, res) => {
+//   let params = {
+//     MessageBody: JSON.stringify(exampleNetwork),
+//     QueueUrl: networkQueueUrl,
+//     DelaySeconds: 0
+//   };
 
-  sqs.sendMessage(params, (err, data) => {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(data);
-    }
-  });
-});
+//   sqs.sendMessage(params, (err, data) => {
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 /*========================NETWORK QUEUE HANDLER========================*/
 
@@ -396,9 +439,9 @@ networkApp.on('error', err => {
 });
 
 // start polling queue
-networkApp.start();
+// networkApp.start();
 // uncomment to stop polling queue
-// networkApp.stop();
+networkApp.stop();
 
 /*===========================EXAMPLES OF MANUAL QUEUE HANDLING===========================*/
 // router.get('/receive', (req, res) => {
