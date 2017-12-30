@@ -5,7 +5,7 @@ config/staging.json
 config/test.json
 
 # Config Files
-server/config.json
+server/helpers/config.json
 newrelic.js
 
 # OS X
