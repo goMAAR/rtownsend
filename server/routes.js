@@ -1,5 +1,6 @@
 /*===================DEPENDENCIES===================*/
 const getNetwork = require('./helpers/getNetwork.js');
+const getFavorite = require('./helpers/getFavorite.js');
 
 const router = require('express').Router();
 const _ = require('underscore');
@@ -211,129 +212,29 @@ tweetApp.on('error', err => {
   console.log(err.message);
 });
 
-// start polling queue
-// tweetApp.start();
-// uncomment to stop polling queue
-tweetApp.stop();
+/*================FAVORITE QUEUE HANDLER================*/
 
-/*===================UNCOMMENT TO MANUALLY SEND FAVORITE TO QUEUE===================*/
-// const exampleFavorite = {
-//   tweet_id: 12345,
-//   favoriter_id: 50000,
-//   favorited_id: 27325,
-//   created_at: '2017-12-15 22:02:52.056-08',
-//   // destroy: false
-//   destroy: true
-// };
-
-// const sqs = new AWS.SQS();
-// router.get('/send', (req, res) => {
-//   let params = {
-//     MessageBody: JSON.stringify(exampleFavorite),
-//     QueueUrl: newFavoriteQueueUrl,
-//     DelaySeconds: 0
-//   };
-
-//   sqs.sendMessage(params, (err, data) => {
-//     if (err) {
-//       res.send(err);
-//     } else {
-//       res.send(data);
-//     }
-//   });
-// });
-
-/*========================FAVORITES QUEUE HANDLER========================*/
-
-// note that this does not yet cascade favorite destruction
-
-// need to also update the hour's ber 
-
-const favoriteApp = Consumer.create({
-  queueUrl: newFavoriteQueueUrl,
-  handleMessage: (message, done) => {
-    let body = JSON.parse(message.Body);
-    let bot, favoriter, tweetID, tweetFavoritesCount, favorited, totalFavorites, botFavorites, userFavorites, ber;
-    tweetID = body.tweet_id;
-    if (body.destroy) {
-      // delete record
-      new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id}).fetch()
-      .then(favorite => {
-        new Favorite({id: favorite.id})
-        .destroy()
-        .then(result => {
-          console.log('successfully destroyed record');
-        })
-        /* will research more complete error handling for nonexistent records */
-        .catch(err => {
-          console.log(err);
-        });
-        done();
-      })
+/* Uncomment to manually send favorite to queue */
+router.get('/postFavorite', (req, res) => {
+  getFavorite.postFavorite((err, data) => {
+    if (err) {
+      res.send(err);
     } else {
-      // create new record and perform associated updates
-      new Favorite({tweet_id: body.tweet_id, favoriter_id: body.favoriter_id, favorited_id: body.favorited_id})
-      .save()
-      // fetch user record for favorited user
-      .then(favorite => {
-        console.log('successfully saved new favorite');
-        favoriter = favorite.attributes.favoriter_id;
-        favorited = favorite.attributes.favorited_id;
-        new User({id: favorited}).fetch()
-        // determine whether favorited user is a bot account
-        .then(favoritedUser => {
-          bot = favoritedUser.attributes.bot_account;
-        })
-        // fetch user metric record for favoriter 
-        .then(result => {
-          new Usermetric({user_id: favoriter}).fetch()
-          // update favorites counts for the favoriter
-          .then(favoriterMetric => {
-            totalFavorites = favoriterMetric.attributes.total_favorites + 1;
-            if (bot) {
-              botFavorites = favoriterMetric.attributes.bot_favorites + 1;
-              userFavorites = favoriterMetric.attributes.user_favorites;
-            } else { 
-              userFavorites = favoriterMetric.attributes.user_favorites + 1;
-              botFavorites = favoriterMetric.attributes.bot_favorites;
-            }
-            ber = botFavorites/userFavorites;
-            return new Usermetric({total_favorites: totalFavorites, bot_favorites: botFavorites, user_favorites: userFavorites, bot_engagement_ratio: ber})
-            .save()
-          })
-          // find tweet
-          .then(updatedMetric => {
-            console.log('successfully updated favoriter metrics');
-            new Tweet({id: tweetID}).fetch()
-            // update favorites count on tweet
-            .then(tweet => {
-              tweetFavoritesCount = tweet.attributes.favorites_count + 1;
-              return new Tweet({id: tweetID, favorites_count: tweetFavoritesCount})
-              .save()
-              .then(updatedTweet => {
-                console.log('successfuly updated tweet');
-              });
-            });
-          });
-        });
-      })
-      .catch(err => {
-        console.log(err);
-      });
-      done();
+      res.send(data);
     }
-  }
+  });
 });
 
 // handle queue errors
-favoriteApp.on('error', err => {
+getFavorite.favoriteApp.on('error', err => {
   console.log(err.message);
 });
 
-// start polling queue
-// favoriteApp.start();
+// uncomment to start polling queue
+getFavorite.favoriteApp.start();
 // uncomment to stop polling queue
-favoriteApp.stop();
+// getFavorite.favoriteApp.stop();
+
 
 /*================NETWORK QUEUE HANDLER================*/
 
