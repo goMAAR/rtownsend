@@ -1,6 +1,6 @@
-/*This script kicks off a worker that sends a request to the <> server route every 1 hour*/
+/* This script kicks off a worker that sends a request to the sentiment server route every 1 hour */
 
-/*To run in development environment: run npm dev-jobs from root directory*/
+/* To run in development environment: run npm sentiment-worker from root directory */
 
 const axios = require('axios');
 const schedule = require('node-schedule');
@@ -26,6 +26,6 @@ const updateSentimentMetrics = {
   }
 };
 
-// (() => {
-//   updateSentimentMetrics.init();
-// })();
+(() => {
+  updateSentimentMetrics.init();
+})();

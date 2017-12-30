@@ -1,6 +1,6 @@
-/*This script kicks off a worker that sends a request to the <> server route every 10 minutes*/
+/*This script kicks off a worker that sends a request to the network server route every 10 minutes*/
 
-/*To run in development environment: run npm dev-jobs from root directory*/
+/*To run in development environment: run npm network-worker from root directory*/
 
 const axios = require('axios');
 const schedule = require('node-schedule');
@@ -26,6 +26,6 @@ const updateNetworkMetrics = {
   }
 };
 
-// (() => {
-//   updateNetworkMetrics.init();
-// })();
+(() => {
+  updateNetworkMetrics.init();
+})();
