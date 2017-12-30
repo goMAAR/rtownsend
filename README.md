@@ -20,10 +20,11 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 
 ## Usage
 
-> npm install
-> Run command 'npm run server-dev' in terminal to start up development server
+- 'npm install'
+- 'npm run server-dev' to start up development server
+- 'brew start redis' to start up redis instance
 
-## Requirements
+## Requirements (Deployment)
 
 - Node 8.9.1
 - Express 4.16.2
@@ -32,8 +33,16 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 - Bookshelf 0.12
 - Knex 0.13
 - Bluebird 3.5.1
-- Moment 2.19.4
+- Redis 3.8.0
+- SQS Consumer 3.8.0
+
+
+## Requirements (Development)
+
 - Faker 4.1
+- Moment 2.19.4
+- New Relic 2.4.2
+
 
 ## Other Information
 

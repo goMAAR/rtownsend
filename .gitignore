@@ -4,6 +4,10 @@ config/production.json
 config/staging.json
 config/test.json
 
+# Config Files
+server/config.json
+newrelic.js
+
 # OS X
 .DS_Store
 
