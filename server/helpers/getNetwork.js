@@ -33,7 +33,7 @@ const params = {
 
 module.exports = {
 
-  postNetwork: (cb) => {
+  postNetwork: cb => {
       sqs.sendMessage(params, (err, data) => {
       if (err) {
         cb(err);
