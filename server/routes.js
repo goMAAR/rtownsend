@@ -2,6 +2,7 @@
 const getNetwork = require('./helpers/getNetwork.js');
 const getFavorite = require('./helpers/getFavorite.js');
 const getTweet = require('./helpers/getTweet.js');
+const postNetwork = require('./helpers/postNetwork.js');
 
 const router = require('express').Router();
 const _ = require('underscore');
@@ -82,51 +83,15 @@ router.get('/sentiment', (req, res) => {
 
 /*This route will be hit every 10 minutes by an automated worker*/
 
-const networkPost = new AWS.SQS();
-
 router.get('/network', (req, res) => {
   console.log('Executing updateNetworkMetrics job 2/2...');
-
-  let newNetworks = [];
-
-  // get an array of all keys in redis cache
-  redis.keysAsync('*')
-  .then(keys => {
-    console.log(`successfully feched ${keys.length} keys`);
-    // add the object at each key to newNetworks array
-    return Promise.each(keys, key => {
-      return redis.hgetallAsync(key)
-      .then(obj => {
-        newNetworks.push(obj);
-      });
-    })
-    .then(result => {
-      console.log('successfully compiled networks batch');
-      // submit newNetworks array to Social Network Processing queue
-      let params = {
-        MessageBody: JSON.stringify({network: newNetworks}),
-        QueueUrl: networkStatQueueUrl,
-        DelaySeconds: 0
-      };
-      networkPost.sendMessage(params, (err, data) => {
-        if (err) {
-          res.send(err);
-        } else {
-          console.log('successfully posted networks batch');
-          res.send(data);
-        }
-      });
-      // flush redis cache
-      redis.flushdbAsync()
-      .then(result => {
-        console.log('successfully flushed redis cache');
-      })
-    });
-  })
-  .catch(err => {
-    console.log(err);
+  postNetwork.submitRecentNetworks( (err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
   });
-
 });
 
 
