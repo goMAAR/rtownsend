@@ -8,6 +8,7 @@ const networkQueueUrl = 'https://sqs.us-west-1.amazonaws.com/307495610107/networ
 const networkPost = new AWS.SQS();
 
 const redis = require('../../db/redis/index.js');
+const Promise = require('bluebird');
 
 const networkStatQueueUrl = 'https://sqs.us-west-1.amazonaws.com/307495610107/networkStat';
 
@@ -18,6 +19,7 @@ let newNetworks = [];
 /*=======================EXPORTS=======================*/
 
 module.exports = {
+
   submitRecentNetworks: cb => {
     redis.keysAsync('*')
     .then(keys => {
