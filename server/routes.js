@@ -65,15 +65,17 @@ getTweet.tweetApp.start();
 /*================FAVORITE QUEUE HANDLER================*/
 
 /* Uncomment to manually send favorite to queue */
-router.get('/postFavorite', (req, res) => {
-  getFavorite.postFavorite((err, data) => {
-    if (err) {
-      res.send(err);
-    } else {
-      res.send(data);
-    }
-  });
-});
+// router.get('/postFavorite', (req, res) => {
+//   console.log('hit post favorite route'); 
+//   getFavorite.postFavorite((err, data) => {
+//     console.log('executing get favorite route');
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
 
 // handle queue errors
 getFavorite.favoriteApp.on('error', err => {
@@ -85,6 +87,28 @@ getFavorite.favoriteApp.start();
 // uncomment to stop polling queue
 // getFavorite.favoriteApp.stop();
 
+/*=====FAKE QUEUE HANDLING=====*/
+
+/* Uncomment to manually send favorite to fake queue */
+// router.get('/postFavoriteFake', (req, res) => {
+//   getFavorite.postFavorite((err, data) => {
+//     if (err) {
+//       res.send(err);
+//     } else {
+//       res.send(data);
+//     }
+//   });
+// });
+
+// handle queue errors
+getFavorite.fakeFavoriteApp.on('error', err => {
+  console.log(err.message);
+});
+
+// uncomment to start polling queue
+getFavorite.fakeFavoriteApp.start();
+// uncomment to stop polling queue
+// getFavorite.fakeFavoriteApp.stop();
 
 /*================NETWORK QUEUE HANDLER================*/
 

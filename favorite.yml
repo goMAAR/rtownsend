@@ -1,0 +1,38 @@
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 30
+      arrivalRate: 1
+      rampTo: 100
+      name: "warm up"
+    - duration: 60
+      arrivalRate: 100
+      name: "light load"
+    - duration: 30
+      arrivalRate: 100
+      rampTo: 500
+      name: "ramp up to heavy load"
+    - duration: 60
+      arrivalRate: 500
+      name: "heavy load"
+  payload:
+    - path: "./server/test/favorites.csv"
+      fields: 
+        - "tweet_id"
+        - "favoriter_id"
+        - "favorited_id"
+        - "created_at"
+        - "destroy"
+scenarios:
+  - name: "Recieve a favorite event"
+    flow:
+      - log: "new virtual user"
+      - post:
+          url: "/newFavorite"
+          json:
+            tweet_id: "{{ tweet_id }}"
+            favoriter_id: "{{ favoriter_id }}"
+            favorited_id: "{{ favorited_id }}"
+            created_at: "{{ created_at }}"
+            destroy: "{{ destroy }}"
+
