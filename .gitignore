@@ -9,6 +9,7 @@ config/test.json
 
 # Config Files
 server/helpers/config.json
+config.json
 newrelic.js
 
 # OS X
