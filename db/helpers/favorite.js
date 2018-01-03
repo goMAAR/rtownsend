@@ -11,7 +11,6 @@ module.exports = {
       return new Favorite({id: favorite.id})
       .destroy()
       .then(result => {
-        console.log('successfully destroyed record');
       })
       .catch(err => {
         console.log(err);
@@ -21,19 +20,16 @@ module.exports = {
   },
 
   createFavorite: (tweetId, favoriterId, favoritedId) => {
-    console.log('in create favorite fn');
     return new Favorite({tweet_id: tweetId, favoriter_id: favoriterId, favorited_id: favoritedId})
     .save()
   },
 
   checkIfBot: favoritedId => {
-    console.log('in check bot');
     return new User({id: favoritedId})
     .fetch()
   },
 
   fetchFavoriterMetrics: favoriterId => {
-    console.log('in check favoriter metrics');
     return new Usermetric({user_id: favoriterId})
     .fetch()
   },

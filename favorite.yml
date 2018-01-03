@@ -5,23 +5,16 @@ config:
       arrivalRate: 1
       rampTo: 5
       name: "warm up"
-    - duration: 60
-      arrivalRate: 100
-      name: "sustain light load"
-    - duration: 30
-      arrivalRate: 100
-      rampTo: 500
-      name: "ramp up to heavy load"
-    - duration: 60
-      arrivalRate: 500
-      name: "sustain heavy load"
-    - duration: 30
-      arrivalRate: 500
-      rampTo: 5000
-      name: "ramp up to max load"
-    - duration: 60
-      arrivalRate: 5000
-      name: "sustain max load"
+    # - duration: 60
+    #   arrivalRate: 100
+    #   name: "sustain light load"
+    # - duration: 30
+    #   arrivalRate: 100
+    #   rampTo: 500
+    #   name: "ramp up to heavy load"
+    # - duration: 60
+    #   arrivalRate: 500
+    #   name: "sustain heavy load"
   # payload:
   #   - path: "./server/test/favorites.csv"
   #     fields: 

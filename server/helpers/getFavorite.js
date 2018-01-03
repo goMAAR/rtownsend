@@ -2,6 +2,7 @@
 // const AWSconfig = require('./config.js');
 const Consumer = require('sqs-consumer');
 const AWS = require('aws-sdk');
+const nr = require('newrelic');
 
 /* Toggle comment to disable manual SQS posting */
 AWS.config.loadFromPath(__dirname + '/config.json');
@@ -55,7 +56,7 @@ const paramsFake = {
 
 /* Variables for database transactions*/
 
-let bot, favoriter, tweetId, tweetFavoritesCount, favorited, totalFavorites, botFavorites, userFavorites, ber;
+let bot, body, favoriter, tweetId, tweetFavoritesCount, favorited, totalFavorites, botFavorites, userFavorites, ber;
 
 /*=======================EXPORTS=======================*/
 
@@ -152,66 +153,76 @@ module.exports = {
   // call this funtion to work on favorites in the fake queue
   fakeFavoriteApp: Consumer.create({
     queueUrl: fakeNewFavoriteQueueUrl,
-    handleMessage: (message, done) => {
-      console.log('in fake favorite app');
-      let body = JSON.parse(message.Body);
-      tweetId = body.tweet_id;
-      favoriterId = body.favoriter_id;
-      favoritedId = body.favorited_id;
 
-      if (body.destroy) {
-        utils.destroyFavorite(tweetId, favoriterId);
+      handleMessage: (message, done) => {
+        nr.startBackgroundTransaction('process:new favorite', () => {
 
-      } else {
-        utils.createFavorite(tweetId, favoriterId, favoritedId)
+          let transaction = nr.getTransaction();
 
-        .then(favorite => {
-          console.log('successfully saved new favorite');
-          utils.checkIfBot(favoritedId)
+          body = JSON.parse(message.Body);
+          tweetId = body.tweet_id;
+          favoriterId = body.favoriter_id;
+          favoritedId = body.favorited_id;
 
-          .then(favoritedUser => {
-            bot = favoritedUser.attributes.bot_account;
-          })
+          if (body.destroy) {
+            utils.destroyFavorite(tweetId, favoriterId);
 
-          .then(result => {
-            utils.fetchFavoriterMetrics(favoriterId)
+          } else {
+            utils.createFavorite(tweetId, favoriterId, favoritedId)
 
-            .then(favoriterMetric => {
-              totalFavorites = favoriterMetric.attributes.total_favorites + 1;
-              if (bot) {
-                botFavorites = favoriterMetric.attributes.bot_favorites + 1;
-                userFavorites = favoriterMetric.attributes.user_favorites;
-              } else { 
-                userFavorites = favoriterMetric.attributes.user_favorites + 1;
-                botFavorites = favoriterMetric.attributes.bot_favorites;
-              }
-              ber = botFavorites/userFavorites;
-              utils.updateFavoriterMetrics(totalFavorites, botFavorites, userFavorites, ber)
-            })
+            .then(favorite => {
+              console.log('successfully saved new favorite');
+              utils.checkIfBot(favoritedId)
 
-            .then(updatedMetric => {
-              console.log('successfully updated favoriter metrics');
-              utils.fetchTweet(tweetId)
+              .then(favoritedUser => {
+                bot = favoritedUser.attributes.bot_account;
+              })
 
-              .then(tweet => {
-                tweetFavoritesCount = tweet.attributes.favorites_count + 1;
-                utils.updateTweetFavoriteCount(tweetId, tweetFavoritesCount)
+              .then(result => {
+                utils.fetchFavoriterMetrics(favoriterId)
 
-                .then(updatedTweet => {
-                  console.log('successfuly updated tweet');
+                .then(favoriterMetric => {
+                  totalFavorites = favoriterMetric.attributes.total_favorites + 1;
+                  if (bot) {
+                    botFavorites = favoriterMetric.attributes.bot_favorites + 1;
+                    userFavorites = favoriterMetric.attributes.user_favorites;
+                  } else { 
+                    userFavorites = favoriterMetric.attributes.user_favorites + 1;
+                    botFavorites = favoriterMetric.attributes.bot_favorites;
+                  }
+                  ber = botFavorites/userFavorites;
+                  utils.updateFavoriterMetrics(totalFavorites, botFavorites, userFavorites, ber)
+                })
+
+                .then(updatedMetric => {
+                  console.log('successfully updated favoriter metrics');
+                  utils.fetchTweet(tweetId)
+
+                  .then(tweet => {
+                    tweetFavoritesCount = tweet.attributes.favorites_count + 1;
+                    utils.updateTweetFavoriteCount(tweetId, tweetFavoritesCount)
+
+                    .then(updatedTweet => {
+                      console.log('successfuly updated tweet');
+                    });
+
+                  });
                 });
 
               });
-            });
-          });
-        })
 
-        .catch(err => {
-          console.log(err);
+            })
+
+            .catch(err => {
+              console.log(err);
+            });
+            transaction.end();
+            done();
+          }
         });
-        done();
-      }
+
     }
+
   })
 
 };

@@ -1,6 +1,8 @@
 /*===================DEPENDENCIES===================*/
 const router = require('express').Router();
 
+const nr = require('newrelic')
+
 const getNetwork = require('./helpers/getNetwork.js');
 const getFavorite = require('./helpers/getFavorite.js');
 const getTweet = require('./helpers/getTweet.js');
@@ -91,7 +93,7 @@ getFavorite.favoriteApp.stop();
 
 /* Uncomment to manually send favorite to fake queue */
 router.get('/postFavoriteFake', (req, res) => {
-  console.log('in post favorite fake route with process:', process.pid)
+  console.log('commence handling favorite');
   getFavorite.postFavoriteFake((err, data) => {
     if (err) {
       res.send(err);
@@ -107,9 +109,11 @@ getFavorite.fakeFavoriteApp.on('error', err => {
 });
 
 // uncomment to start polling queue
-// getFavorite.fakeFavoriteApp.start();
+
+getFavorite.fakeFavoriteApp.start();
+
 // uncomment to stop polling queue
-getFavorite.fakeFavoriteApp.stop();
+// getFavorite.fakeFavoriteApp.stop();
 
 /*================NETWORK QUEUE HANDLER================*/
 
