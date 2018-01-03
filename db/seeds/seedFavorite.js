@@ -10,12 +10,11 @@ const outfile = '../outfave.csv';
 *========================================================*/
 
 // Creates records with the following fields:
-// created_at, updated_at, followed_id, follower_id
+// created_at, updated_at, favorited_id, tweet_id, favoriter_id
 
 let favorite = '';
 let random;
 
-/*RESEED NETWORK DATA*/
 
 // Non-Influencers
 const generateRegularFavorites = () => {

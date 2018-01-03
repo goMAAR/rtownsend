@@ -2,6 +2,7 @@ const Bookshelf = require('./bookshelf.js')
 
 require('./tweet.js');
 require('./user.js');
+
 const Favorite = Bookshelf.Model.extend({
   tableName: 'favorites',
   hasTimestamps: true,

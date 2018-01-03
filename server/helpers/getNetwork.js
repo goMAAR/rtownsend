@@ -1,4 +1,5 @@
 /*===================DEPENDENCIES===================*/
+
 const Consumer = require('sqs-consumer');
 const AWS = require('aws-sdk');
 AWS.config.loadFromPath(__dirname + '/config.json');
@@ -9,6 +10,10 @@ const sqs = new AWS.SQS();
 const Usermetric = require('../../db/usermetric.js');
 const Network = require('../../db/network.js');
 const redis = require('../../db/redis/index.js');
+
+/*=======================================================*/
+
+/* Constants for manually posting to queue */
 
 const exampleNetwork = {
   follower_id: 40005,
@@ -24,9 +29,11 @@ const params = {
   DelaySeconds: 0
 };
 
+/*=======================EXPORTS=======================*/
+
 module.exports = {
 
-  postNetwork: (cb) => {
+  postNetwork: cb => {
       sqs.sendMessage(params, (err, data) => {
       if (err) {
         cb(err);
@@ -35,7 +42,6 @@ module.exports = {
       }
     });
   },
-
 
   networkApp: Consumer.create({
     queueUrl: networkQueueUrl,
@@ -111,4 +117,5 @@ module.exports = {
       }
     }
   })
+
 };

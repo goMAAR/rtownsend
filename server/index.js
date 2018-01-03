@@ -1,24 +1,42 @@
-// const apm = require('elastic-apm-node').start({
-//   appName: 'engagement'
-// });
+
 const nr = require('newrelic')
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
 
-const app = express();
-
-const routes = require('./routes');
-
-app.use(bodyParser.urlencoded({ extended: false }))
-app.use(bodyParser.json());
-
-app.use('/', routes);
+const cluster = require('cluster');
 
 
-// app.use(apm.middleware.express());
+if (cluster.isMaster) {
+  const numWorkers = require('os').cpus().length;
 
-let port = 4568;
-app.listen(port, () => {
-  console.log(`listening on port: ${port}`)
-});
+  console.log(`Master cluster setting up ${numWorkers} workers`);
+
+  for (let i = 0; i < numWorkers; i++) {
+    cluster.fork();
+  }
+
+  cluster.on('online', worker => {
+    console.log(`Worker ${worker.process.pid} is online`);
+  });
+
+  cluster.on('exit', (worker, code, signal) => {
+    console.log(`Worker ${worker.process.pid} died with code: ${code} and signal: ${signal}`);
+    console.log('Starting new worker');
+    cluster.fork();
+  });
+} else {
+  const app = express();
+  const routes = require('./routes');
+
+  app.use(bodyParser.urlencoded({extended: false}));
+  app.use(bodyParser.json());
+
+  app.use('/', routes);
+
+  let port = 4568;
+  app.listen(port, () => {
+    console.log(`Process ${process.pid} is listening to all incoming traffic`);
+  });
+}
+
+

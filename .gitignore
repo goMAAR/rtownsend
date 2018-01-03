@@ -4,6 +4,9 @@ config/production.json
 config/staging.json
 config/test.json
 
+# Large test files and seeds
+*.csv
+
 # Config Files
 server/helpers/config.json
 config.json

@@ -5,7 +5,10 @@
   "license": "ISC",
   "scripts": {
     "server-dev": "nodemon server/index.js",
-    "dev-jobs": "node server/workers/networkMetrics.js"
+    "sentiment-worker": "node server/workers/updateNetworkMetrics.js",
+    "network-worker": "node server/workers/updateSentiment.js",
+    "dev-redis": "redis-server",
+    "dev-postgres": "psql -U reb"
   },
   "dependencies": {
     "aws-sdk": "^2.172.0",
