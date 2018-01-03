@@ -12,6 +12,8 @@ AWS.config.loadFromPath(__dirname + '/config.json');
 // Run in command line
 // fake_sqs -p 3000
 // curl http://localhost:3000 -d "Action=CreateQueue&QueueName=newFavorite&AWSAccessKeyId=accessKey"
+// curl http://localhost:3000/newFavorite -d "Action=SendMessage&QueueUrl=http://localhost:3000/newFavorite&MessageBody='stuff'&AWSAccessKeyId=access%20key%20id"
+// curl http://localhost:3000/newFavorite -d "Action=ReceiveMessage&QueueUrl=http://localhost:3000/newFavorite&AWSAccessKeyId=access%20key%20id"
 
 const newFavoriteQueueUrl = 'https://sqs.us-west-1.amazonaws.com/307495610107/newFavorite';
 const fakeNewFavoriteQueueUrl = "http://localhost:3000/newFavorite";
@@ -72,7 +74,7 @@ module.exports = {
 
   // call this function to manually add a favorite to the fake queue
   postFavoriteFake: cb => {
-    sqs.sendMessage(fakeParams, (err, data) => {
+    sqs.sendMessage(paramsFake, (err, data) => {
       if (err) {
         cb(err);
       } else {
@@ -151,6 +153,7 @@ module.exports = {
   fakeFavoriteApp: Consumer.create({
     queueUrl: fakeNewFavoriteQueueUrl,
     handleMessage: (message, done) => {
+      console.log('in fake favorite app');
       let body = JSON.parse(message.Body);
       tweetId = body.tweet_id;
       favoriterId = body.favoriter_id;
@@ -210,69 +213,5 @@ module.exports = {
       }
     }
   })
-
-  // call this function to bypass the queue
-  // favoriteApp: Consumer.create({
-  //   queueUrl: newFavoriteQueueUrl,
-  //   handleMessage: (message, done) => {
-  //     let body = JSON.parse(message.Body);
-  //     tweetId = body.tweet_id;
-  //     favoriterId = body.favoriter_id;
-  //     favoritedId = body.favorited_id;
-
-  //     if (body.destroy) {
-  //       utils.destroyFavorite(tweetId, favoriterId);
-
-  //     } else {
-  //       utils.createFavorite(tweetId, favoriterId, favoritedId)
-
-  //       .then(favorite => {
-  //         console.log('successfully saved new favorite');
-  //         utils.checkIfBot(favoritedId)
-
-  //         .then(favoritedUser => {
-  //           bot = favoritedUser.attributes.bot_account;
-  //         })
-
-  //         .then(result => {
-  //           utils.fetchFavoriterMetrics(favoriterId)
-
-  //           .then(favoriterMetric => {
-  //             totalFavorites = favoriterMetric.attributes.total_favorites + 1;
-  //             if (bot) {
-  //               botFavorites = favoriterMetric.attributes.bot_favorites + 1;
-  //               userFavorites = favoriterMetric.attributes.user_favorites;
-  //             } else { 
-  //               userFavorites = favoriterMetric.attributes.user_favorites + 1;
-  //               botFavorites = favoriterMetric.attributes.bot_favorites;
-  //             }
-  //             ber = botFavorites/userFavorites;
-  //             utils.updateFavoriterMetrics(totalFavorites, botFavorites, userFavorites, ber)
-  //           })
-
-  //           .then(updatedMetric => {
-  //             console.log('successfully updated favoriter metrics');
-  //             utils.fetchTweet(tweetId)
-
-  //             .then(tweet => {
-  //               tweetFavoritesCount = tweet.attributes.favorites_count + 1;
-  //               utils.updateTweetFavoriteCount(tweetId, tweetFavoritesCount)
-
-  //               .then(updatedTweet => {
-  //                 console.log('successfuly updated tweet');
-  //               });
-
-  //             });
-  //           });
-  //         });
-  //       })
-
-  //       .catch(err => {
-  //         console.log(err);
-  //       });
-  //       done();
-  //     }
-  //   }
-  // }),
 
 };

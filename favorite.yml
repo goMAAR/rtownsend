@@ -1,38 +1,39 @@
 config:
-  target: "http://localhost:3000"
+  target: "http://localhost:4568"
   phases:
-    - duration: 30
+    - duration: 10
       arrivalRate: 1
-      rampTo: 100
+      rampTo: 5
       name: "warm up"
     - duration: 60
       arrivalRate: 100
-      name: "light load"
+      name: "sustain light load"
     - duration: 30
       arrivalRate: 100
       rampTo: 500
       name: "ramp up to heavy load"
     - duration: 60
       arrivalRate: 500
-      name: "heavy load"
-  payload:
-    - path: "./server/test/favorites.csv"
-      fields: 
-        - "tweet_id"
-        - "favoriter_id"
-        - "favorited_id"
-        - "created_at"
-        - "destroy"
+      name: "sustain heavy load"
+    - duration: 30
+      arrivalRate: 500
+      rampTo: 5000
+      name: "ramp up to max load"
+    - duration: 60
+      arrivalRate: 5000
+      name: "sustain max load"
+  # payload:
+  #   - path: "./server/test/favorites.csv"
+  #     fields: 
+  #       - "tweet_id"
+  #       - "favoriter_id"
+  #       - "favorited_id"
+  #       - "created_at"
+        # - "destroy"
 scenarios:
-  - name: "Recieve a favorite event"
+  - name: "Submit a fake favorite event"
     flow:
-      - log: "new virtual user"
-      - post:
-          url: "/newFavorite"
-          json:
-            tweet_id: "{{ tweet_id }}"
-            favoriter_id: "{{ favoriter_id }}"
-            favorited_id: "{{ favorited_id }}"
-            created_at: "{{ created_at }}"
-            destroy: "{{ destroy }}"
+      - get:
+          url: "/postFavoriteFake"
+
 

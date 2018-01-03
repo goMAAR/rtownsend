@@ -1,14 +1,10 @@
 
 const nr = require('newrelic')
-
-
-
-
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
 
 const cluster = require('cluster');
+
 
 if (cluster.isMaster) {
   const numWorkers = require('os').cpus().length;
@@ -24,35 +20,23 @@ if (cluster.isMaster) {
   });
 
   cluster.on('exit', (worker, code, signal) => {
-    console.log(`Worker ${worker.process.pid} died with code: ${code}, and signal ${signal}`);
-    console.log('Starting a new worker');
+    console.log(`Worker ${worker.process.pid} died with code: ${code} and signal: ${signal}`);
+    console.log('Starting new worker');
     cluster.fork();
   });
-
 } else {
   const app = express();
-
   const routes = require('./routes');
 
-  app.use(bodyParser.urlencoded({ extended: false }))
+  app.use(bodyParser.urlencoded({extended: false}));
   app.use(bodyParser.json());
 
   app.use('/', routes);
 
-  app.all('/*', (req, res) => {
-    res.send(`process ${process.pid} says hello!`).end();
-  })
-
   let port = 4568;
-
   app.listen(port, () => {
-    console.log(`Process ${process.pid} is listening to all incoming requests`);
+    console.log(`Process ${process.pid} is listening to all incoming traffic`);
   });
 }
-// const app = express();
 
 
-// let port = 4568;
-// app.listen(port, () => {
-//   console.log(`listening on port: ${port}`)
-// });

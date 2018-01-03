@@ -4,8 +4,8 @@ config/production.json
 config/staging.json
 config/test.json
 
-# Large test files
-server/test/favorites.csv
+# Large test files and seeds
+*.csv
 
 # Config Files
 server/helpers/config.json
