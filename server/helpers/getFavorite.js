@@ -87,72 +87,8 @@ module.exports = {
   // note that this does not yet cascade favorite destruction
 
   // call this funtion to work on favorites in the queue
-  favoriteApp: Consumer.create({
+    favoriteApp: Consumer.create({
     queueUrl: newFavoriteQueueUrl,
-    handleMessage: (message, done) => {
-      let body = JSON.parse(message.Body);
-      tweetId = body.tweet_id;
-      favoriterId = body.favoriter_id;
-      favoritedId = body.favorited_id;
-
-      if (body.destroy) {
-        utils.destroyFavorite(tweetId, favoriterId);
-
-      } else {
-        utils.createFavorite(tweetId, favoriterId, favoritedId)
-
-        .then(favorite => {
-          console.log('successfully saved new favorite');
-          utils.checkIfBot(favoritedId)
-
-          .then(favoritedUser => {
-            bot = favoritedUser.attributes.bot_account;
-          })
-
-          .then(result => {
-            utils.fetchFavoriterMetrics(favoriterId)
-
-            .then(favoriterMetric => {
-              totalFavorites = favoriterMetric.attributes.total_favorites + 1;
-              if (bot) {
-                botFavorites = favoriterMetric.attributes.bot_favorites + 1;
-                userFavorites = favoriterMetric.attributes.user_favorites;
-              } else { 
-                userFavorites = favoriterMetric.attributes.user_favorites + 1;
-                botFavorites = favoriterMetric.attributes.bot_favorites;
-              }
-              ber = botFavorites/userFavorites;
-              utils.updateFavoriterMetrics(totalFavorites, botFavorites, userFavorites, ber)
-            })
-
-            .then(updatedMetric => {
-              console.log('successfully updated favoriter metrics');
-              utils.fetchTweet(tweetId)
-
-              .then(tweet => {
-                tweetFavoritesCount = tweet.attributes.favorites_count + 1;
-                utils.updateTweetFavoriteCount(tweetId, tweetFavoritesCount)
-
-                .then(updatedTweet => {
-                  console.log('successfuly updated tweet');
-                });
-
-              });
-            });
-          });
-        })
-
-        .catch(err => {
-          console.log(err);
-        });
-        done();
-      }
-    }
-  }),
-
-  // call this funtion to work on favorites in the fake queue
-  fakeFavoriteApp: Consumer.create({
-    queueUrl: fakeNewFavoriteQueueUrl,
 
       handleMessage: (message, done) => {
         nr.startBackgroundTransaction('process:new favorite', () => {
@@ -171,7 +107,6 @@ module.exports = {
             utils.createFavorite(tweetId, favoriterId, favoritedId)
 
             .then(favorite => {
-              console.log('successfully saved new favorite');
               utils.checkIfBot(favoritedId)
 
               .then(favoritedUser => {
@@ -195,7 +130,6 @@ module.exports = {
                 })
 
                 .then(updatedMetric => {
-                  console.log('successfully updated favoriter metrics');
                   utils.fetchTweet(tweetId)
 
                   .then(tweet => {
@@ -203,7 +137,80 @@ module.exports = {
                     utils.updateTweetFavoriteCount(tweetId, tweetFavoritesCount)
 
                     .then(updatedTweet => {
-                      console.log('successfuly updated tweet');
+                      // console.log('finished handling favorite');
+                    });
+
+                  });
+                });
+
+              });
+
+            })
+
+            .catch(err => {
+              console.log(err);
+            });
+            transaction.end();
+            done();
+          }
+        });
+
+    }
+
+  }),
+
+  // call this funtion to work on favorites in the fake queue
+  fakeFavoriteApp: Consumer.create({
+    queueUrl: fakeNewFavoriteQueueUrl,
+
+      handleMessage: (message, done) => {
+        nr.startBackgroundTransaction('process:new favorite', () => {
+
+          let transaction = nr.getTransaction();
+
+          body = JSON.parse(message.Body);
+          tweetId = body.tweet_id;
+          favoriterId = body.favoriter_id;
+          favoritedId = body.favorited_id;
+
+          if (body.destroy) {
+            utils.destroyFavorite(tweetId, favoriterId);
+
+          } else {
+            utils.createFavorite(tweetId, favoriterId, favoritedId)
+
+            .then(favorite => {
+              utils.checkIfBot(favoritedId)
+
+              .then(favoritedUser => {
+                bot = favoritedUser.attributes.bot_account;
+              })
+
+              .then(result => {
+                utils.fetchFavoriterMetrics(favoriterId)
+
+                .then(favoriterMetric => {
+                  totalFavorites = favoriterMetric.attributes.total_favorites + 1;
+                  if (bot) {
+                    botFavorites = favoriterMetric.attributes.bot_favorites + 1;
+                    userFavorites = favoriterMetric.attributes.user_favorites;
+                  } else { 
+                    userFavorites = favoriterMetric.attributes.user_favorites + 1;
+                    botFavorites = favoriterMetric.attributes.bot_favorites;
+                  }
+                  ber = botFavorites/userFavorites;
+                  utils.updateFavoriterMetrics(totalFavorites, botFavorites, userFavorites, ber)
+                })
+
+                .then(updatedMetric => {
+                  utils.fetchTweet(tweetId)
+
+                  .then(tweet => {
+                    tweetFavoritesCount = tweet.attributes.favorites_count + 1;
+                    utils.updateTweetFavoriteCount(tweetId, tweetFavoritesCount)
+
+                    .then(updatedTweet => {
+                      // console.log('finished handling favorite');
                     });
 
                   });
