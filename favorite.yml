@@ -10,10 +10,10 @@ config:
       name: "sustain light load"
     - duration: 30
       arrivalRate: 100
-      rampTo: 500
+      rampTo: 200
       name: "ramp up to heavy load"
     - duration: 60
-      arrivalRate: 500
+      arrivalRate: 200
       name: "sustain heavy load"
   # payload:
   #   - path: "./server/test/favorites.csv"
