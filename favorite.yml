@@ -10,18 +10,11 @@ config:
       name: "sustain light load"
     - duration: 30
       arrivalRate: 100
-      rampTo: 500
+      rampTo: 200
       name: "ramp up to heavy load"
     - duration: 60
-      arrivalRate: 500
+      arrivalRate: 200
       name: "sustain heavy load"
-    - duration: 30
-      arrivalRate: 500
-      rampTo: 5000
-      name: "ramp up to max load"
-    - duration: 60
-      arrivalRate: 5000
-      name: "sustain max load"
   # payload:
   #   - path: "./server/test/favorites.csv"
   #     fields: 
@@ -34,6 +27,6 @@ scenarios:
   - name: "Submit a fake favorite event"
     flow:
       - get:
-          url: "/postFavoriteFake"
+          url: "/postFavorite"
 
 

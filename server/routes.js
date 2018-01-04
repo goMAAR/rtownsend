@@ -65,17 +65,16 @@ getTweet.tweetApp.start();
 /*================FAVORITE QUEUE HANDLER================*/
 
 /* Uncomment to manually send favorite to queue */
-// router.get('/postFavorite', (req, res) => {
-//   console.log('hit post favorite route with process', process.pid); 
-//   getFavorite.postFavorite((err, data) => {
-//     console.log('executing get favorite route');
-//     if (err) {
-//       res.send(err);
-//     } else {
-//       res.send(data);
-//     }
-//   });
-// });
+router.get('/postFavorite', (req, res) => {
+  console.log('commence handling favortie with process', process.pid); 
+  getFavorite.postFavorite((err, data) => {
+    if (err) {
+      res.send(err);
+    } else {
+      res.send(data);
+    }
+  });
+});
 
 // handle queue errors
 getFavorite.favoriteApp.on('error', err => {
@@ -83,15 +82,15 @@ getFavorite.favoriteApp.on('error', err => {
 });
 
 // uncomment to start polling queue
-// getFavorite.favoriteApp.start();
+getFavorite.favoriteApp.start();
 // uncomment to stop polling queue
-getFavorite.favoriteApp.stop();
+// getFavorite.favoriteApp.stop();
 
 /*=====FAKE QUEUE HANDLING=====*/
 
 /* Uncomment to manually send favorite to fake queue */
 router.get('/postFavoriteFake', (req, res) => {
-  console.log('in post favorite fake route with process:', process.pid)
+  console.log('commence handling favorite');
   getFavorite.postFavoriteFake((err, data) => {
     if (err) {
       res.send(err);
